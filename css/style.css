@@ -88,8 +88,8 @@ body {
     position: relative;
   }
   #micBtn {
-    width: 110px !important;
-    height: 110px !important;
+    width: 100px !important;
+    height: 100px !important;
     font-size: 3.2rem !important;
     margin: 0 auto;
     pointer-events: auto;
@@ -102,13 +102,13 @@ body {
   #keyboardBtn {
     position: absolute;
     right: 0;
-    top: 50%;
+    top: 70%;
     transform: translateY(-50%);
-    width: 44px !important;
-    height: 44px !important;
+    width: 50px !important;
+    height: 50px !important;
     font-size: 1.3rem !important;
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 50px;
+    min-height: 50px;
     margin: 0;
     pointer-events: auto;
     transition: box-shadow 0.2s;
@@ -116,21 +116,6 @@ body {
   }
   #keyboardBtn:active, #micBtn:active {
     box-shadow: 0 0 0 2px #b7e4c7;
-  }
-  @media (max-width: 500px) {
-    .mic-btn-container .relative {
-      width: 98vw;
-      max-width: 98vw;
-    }
-    #micBtn { width: 80px !important; height: 80px !important; font-size: 2.2rem !important; }
-    #keyboardBtn { width: 36px !important; height: 36px !important; font-size: 1rem !important; }
-    .mic-btn-container { bottom: 72px; }
-  }
-  #micBtn.recording {
-  }
-  @media (max-width: 500px) {
-    #micBtn { width: 80px !important; height: 80px !important; font-size: 2.2rem !important; }
-    .mic-btn-container { bottom: 72px; }
   }
   .bottom-bar-vallabus {
     padding-top: 60px !important;
