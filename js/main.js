@@ -296,7 +296,7 @@ function speakLongText(text) {
       const div = document.createElement('div');
       div.className = sender === 'user'
         ? 'chat-bubble user-bubble bg-[#c0d6c5] dark:bg-[#23382b] text-[#1e4636] dark:text-[#eaf7ef] border border-[#d1f2e0] dark:border-[#3a4d44] rounded-2xl px-4 py-2 text-base w-fit self-end shadow-sm max-w-[90%] mb-3 mr-2'
-        : 'chat-bubble bg-[#f8fef9] dark:bg-[#2e4d3a] text-[#185d39] dark:text-[#b7e4c7] border border-[#d1f2e0] dark:border-[#3a4d44] rounded-2xl px-4 py-2 text-xl w-fit shadow-sm max-w-[90%] mb-3 ml-2';
+        : 'chat-bubble bg-[#f8fef9] dark:bg-[#2e4d3a] text-[#185d39] dark:text-[#b7e4c7] border border-[#d1f2e0] dark:border-[#3a4d44] rounded-2xl px-4 py-2 text-lg w-fit shadow-sm max-w-[90%] mb-3 ml-2';
       div.innerHTML = text;
       chatContainer.appendChild(div);
       // Scroll automático al último mensaje (solución robusta)
