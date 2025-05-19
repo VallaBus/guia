@@ -137,46 +137,49 @@ speakLongTextCancelado = false;
 setSpeakingState(true);
 
 function speakNext() {
+  // Refuerzo: comprobar justo antes de hablar
   if (speakLongTextCancelado || idx >= frases.length) {
-          // Si se terminó de hablar o se canceló
-          setSpeakingState(false);
-          return;
-        }
-        
-        let frase = frases[idx].trim();
-        // Si la frase contiene el marcador especial, decir 'Consulta el enlace.'
-        if (frase.includes('___ENLACE___')) {
-          frase = 'Consulta el enlace.';
-        }
-        
-        utteranceActual = new SpeechSynthesisUtterance(frase);
-        utteranceActual.lang = 'es-ES';
-        const vocesEs = voices.filter(voice => voice.lang.startsWith('es'));
-        if (vocesEs.length > 0) utteranceActual.voice = vocesEs[0];
-        utteranceActual.volume = 1;
-        utteranceActual.rate = 1;
-        utteranceActual.pitch = 1;
-        
-        utteranceActual.onstart = () => {
-          setSpeakingState(true);
-        };
-        
-        utteranceActual.onend = () => {
-          utteranceActual = null;
-          idx++;
-          speakNext();
-        };
-        
-        utteranceActual.onerror = (e) => {
-          utteranceActual = null;
-          console.log('Error en síntesis:', e.error);
-          idx++;
-          speakNext();
-        };
-        
-        window.speechSynthesis.speak(utteranceActual);
-      }
-      speakNext();
+    setSpeakingState(false);
+    return;
+  }
+  let frase = frases[idx].trim();
+  if (frase.includes('___ENLACE___')) {
+    frase = 'Consulta el enlace.';
+  }
+  utteranceActual = new SpeechSynthesisUtterance(frase);
+  utteranceActual.lang = 'es-ES';
+  const vocesEs = voices.filter(voice => voice.lang.startsWith('es'));
+  if (vocesEs.length > 0) utteranceActual.voice = vocesEs[0];
+  utteranceActual.volume = 1;
+  utteranceActual.rate = 1;
+  utteranceActual.pitch = 1;
+  utteranceActual.onstart = () => {
+    setSpeakingState(true);
+  };
+  utteranceActual.onend = () => {
+    utteranceActual = null;
+    idx++;
+    // Refuerzo: comprobar justo antes de lanzar el siguiente fragmento
+    if (speakLongTextCancelado) {
+      setSpeakingState(false);
+      return;
+    }
+    speakNext();
+  };
+  utteranceActual.onerror = (e) => {
+    utteranceActual = null;
+    console.log('Error en síntesis:', e.error);
+    idx++;
+    // Refuerzo: comprobar justo antes de lanzar el siguiente fragmento
+    if (speakLongTextCancelado) {
+      setSpeakingState(false);
+      return;
+    }
+    speakNext();
+  };
+  window.speechSynthesis.speak(utteranceActual);
+}
+speakNext();
     }
     // --- Alternar modo texto/micrófono ---
     const keyboardBtn = document.getElementById('keyboardBtn');
@@ -277,6 +280,7 @@ function speakNext() {
     setTextMode(false);
 
     micBtn.addEventListener('click', () => {
+      speakLongTextCancelado = true; // Igual que el botón detener
       window.speechSynthesis.cancel(); // Detener cualquier voz en curso
       if (recognizing) {
         recognition.stop();

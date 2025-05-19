@@ -49,7 +49,7 @@ body {
     min-height: 320px;
     background: transparent;
     overflow-y: auto;
-    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0)); /* Mejor soporte para barra inferior y móviles modernos */
+    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0)); /* Más espacio para el micrófono y barra inferior */
     scroll-behavior: smooth; /* Desplazamiento suave */
   }
   .placeholder-vallabus {
