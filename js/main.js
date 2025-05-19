@@ -293,17 +293,11 @@ function speakLongText(text) {
         : 'chat-bubble bg-[#f8fef9] dark:bg-[#2e4d3a] text-[#185d39] dark:text-[#b7e4c7] border border-[#d1f2e0] dark:border-[#3a4d44] rounded-2xl px-4 py-2 text-xl w-fit shadow-sm max-w-[90%] mb-3 ml-2';
       div.innerHTML = text;
       chatContainer.appendChild(div);
-      
-      // Asegurar que el scroll muestre el último mensaje
-      requestAnimationFrame(() => {
-        chatContainer.scrollTo({
-          top: chatContainer.scrollHeight,
-          behavior: 'smooth'
-        });
-      });
-      
+      // Scroll automático al último mensaje (solución robusta)
+      setTimeout(() => {
+        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 100);
       // Actualizar el placeholder (si existe)
-      updatePlaceholder();
       updatePlaceholder();
     }
 
