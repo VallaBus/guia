@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Texto a Voz con Web Speech API</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="config.js"></script>
@@ -14,7 +14,7 @@
   <body class="bg-[#5f7262] dark:bg-[#1a2320] text-[#1e4636] dark:text-[#eaf7ef] min-h-screen flex flex-col justify-between font-sans" style="background: linear-gradient(135deg, #5f7262 60%, #34453a 100%); background-repeat: no-repeat; background-attachment: fixed;">
     <!-- Encabezado fijo -->
     <header class="fixed top-0 left-0 right-0 bg-[#434f48] dark:bg-[#212d26] text-white py-3 z-40 shadow-md cursor-pointer" onclick="document.getElementById('chatContainer').scrollTo({top: 0, behavior: 'smooth'})">
-      <h1 class="text-xl font-bold text-center">Asistente VallaBus</h1>
+      <h1 class="text-xl font-bold text-center text-[#eaf7ef] dark:text-[#b7e4c7]">Asistente VallaBus</h1>
     </header>
     
     <div class="relative flex-1 w-full max-w-md mx-auto px-2 overflow-y-auto space-y-2 pt-16" id="chatContainer">
@@ -25,15 +25,22 @@
     </div>
     <!-- Micrófono superpuesto -->
     <div class="mic-btn-container w-full max-w-md flex justify-center pointer-events-none fixed left-1/2 bottom-14 translate-x-[-50%] z-30">
-      <button id="micBtn" title="Hablar o parar" class="relative flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto
-        bg-[#434f48] text-white border-4 border-[#698374]
-        dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347]">
-        <span id="micIcon"><i class="fa-solid fa-microphone"></i></span>
-      </button>
+      <div class="relative w-full flex justify-center items-center">
+        <button id="micBtn" title="Hablar o parar" class="relative flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#434f48] text-white border-4 border-[#698374] dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347]" style="width:110px;height:110px;font-size:3.2rem;z-index:10;">
+          <span id="micIcon"><i class="fa-solid fa-microphone"></i></span>
+        </button>
+        <button id="keyboardBtn" title="Modo texto" class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#eaf7ef] text-[#434f48] border-2 border-[#698374] dark:bg-[#355347] dark:text-[#b7e4c7] dark:border-[#23382b] p-2 text-lg" style="width:44px;height:44px;min-width:44px;min-height:44px;z-index:20;">
+          <i class="fa-solid fa-keyboard"></i>
+        </button>
+      </div>
     </div>
     <!-- Barra inferior fija con info -->
     <div class="fixed-bottom-bar bg-white border-t-[1.5px] border-[#d1f2e0] dark:bg-[#1c2623] dark:border-t-[#355347] dark:shadow-[0_-2px_24px_#0008] min-h-[88px] flex items-center justify-center">
   <div id="info" class="text-[#4e8c6c] dark:text-[#b7e4c7] text-base text-center font-medium">Pulsa para hablar</div>
+  <form id="textInputForm" class="text-input-bar flex items-center w-full h-full gap-2" style="display:none;">
+    <input id="textInput" type="text" autocomplete="off" placeholder="Pregunta lo que quieras" class="flex-1 h-full rounded-lg border-none px-4 py-3 text-xl bg-transparent focus:outline-none focus:ring-0" />
+    <button type="submit" class="rounded-full bg-[#434f48] text-white border-4 border-[#698374] dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347] flex items-center justify-center shadow transition w-12 h-12 p-0"><i class="fa-solid fa-arrow-right fa-lg"></i></button>
+  </form>
   <div class="loader absolute left-0 right-0 flex flex-col items-center justify-center hidden" id="loader">
     <span class="text-[#4e8c6c] dark:text-[#b7e4c7] text-base font-semibold">Pensando...</span>
   </div>

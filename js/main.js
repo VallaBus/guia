@@ -178,6 +178,104 @@ function speakNext() {
       }
       speakNext();
     }
+    // --- Alternar modo texto/micrófono ---
+    const keyboardBtn = document.getElementById('keyboardBtn');
+    const textInputForm = document.getElementById('textInputForm');
+    const textInput = document.getElementById('textInput');
+
+    function setTextMode(active) {
+      const info = document.getElementById('info');
+      if (active) {
+        micBtn.style.display = 'none';
+        keyboardBtn.style.display = 'none'; // Ocultamos el botón de teclado en modo texto
+        textInputForm.style.display = '';
+        if (info) info.style.display = 'none';
+        // También ocultar info si loader está visible
+        const loader = document.getElementById('loader');
+        if (loader && loader.style.display !== 'none') info.style.display = 'none';
+        textInput.focus();
+      } else {
+        micBtn.style.display = '';
+        keyboardBtn.style.display = '';
+        textInputForm.style.display = 'none';
+        // Solo mostrar info si loader está oculto y no estamos en modo texto
+        const loader = document.getElementById('loader');
+        if (info && (!loader || loader.style.display === 'none')) info.style.display = '';
+        textInput.value = '';
+      }
+    }
+
+    keyboardBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      setTextMode(true);
+    });
+    // Al perder foco el input, si está vacío, volver a modo micrófono
+    textInput.addEventListener('blur', () => {
+      setTimeout(() => {
+        if (!textInput.value) setTextMode(false);
+      }, 150);
+    });
+    // Al pulsar ESC, volver a modo micrófono
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        setTextMode(false);
+      }
+    });
+    // Enviar consulta por texto
+    textInputForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const value = textInput.value.trim();
+      if (!value) return;
+      addMessage(value, 'user');
+      setTextMode(false);
+      // Ocultar "Pulsa para hablar" antes de mostrar loader
+      const info = document.getElementById('info');
+      if (info) info.style.display = 'none';
+      document.getElementById('loader').style.display = 'flex';
+      // Enviar al webhook igual que en reconocimiento de voz
+      const credentials = btoa(`${WEBHOOK_USER}:${WEBHOOK_PASS}`);
+      fetch('https://tasks.nukeador.com/webhook/2d4dfc03-6c23-43ce-a419-c717c33799b5', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`
+        },
+        body: JSON.stringify({ texto: value, usuario_id: usuarioId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('loader').style.display = 'none';
+          // Mostrar de nuevo "Pulsa para hablar" solo si no estamos en modo texto
+          if (textInputForm.style.display === 'none' && info) info.style.display = '';
+          let respuesta = data.output || 'Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.';
+          const urlRegex = /(https?:\/\/[^\s]+)/g;
+          const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
+          let respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
+          const respuestaConEnlaces = respuesta.replace(urlRegex, url => {
+            try {
+              const urlObj = new URL(url);
+              return `<a href="${url}" target="_blank" rel="noopener" class="text-[#228b54] dark:text-[#7be495] underline">${urlObj.hostname}</a>`;
+            } catch {
+              return url;
+            }
+          }).replace(/\n/g, '<br>');
+          addMessage(respuestaConEnlaces, 'bot');
+          respuestaPendiente = respuestaParaVoz;
+          if (recognitionEnded && respuestaPendiente) {
+            speakLongText(respuestaPendiente);
+            respuestaPendiente = null;
+          }
+        })
+        .catch(() => {
+          document.getElementById('loader').style.display = 'none';
+          if (textInputForm.style.display === 'none' && info) info.style.display = '';
+          addMessage('Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.', 'bot');
+        });
+    });
+
+    // Mostrar solo uno de los botones según modo al cargar
+    setTextMode(false);
+
     micBtn.addEventListener('click', () => {
       window.speechSynthesis.cancel(); // Detener cualquier voz en curso
       if (recognizing) {
