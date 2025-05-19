@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Enviar al webhook
         // Codificar credenciales en base64 para Basic Auth
         const credentials = btoa(`${WEBHOOK_USER}:${WEBHOOK_PASS}`);
+        showThinkingPlaceholder();
         fetch('https://tasks.nukeador.com/webhook/2d4dfc03-6c23-43ce-a419-c717c33799b5', {
           method: 'POST',
           headers: {
@@ -65,6 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
           .then(res => res.json())
           .then(data => {
+            removeThinkingPlaceholder();
             document.getElementById('loader').style.display = 'none';
             let respuesta = data.output || 'Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.';
             // Reemplazar todas las URLs por un marcador especial para la voz
@@ -90,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           })
           .catch(err => {
+            removeThinkingPlaceholder();
             document.getElementById('loader').style.display = 'none';
             info.textContent = 'Error al procesar la consulta.';
           });
@@ -225,6 +228,7 @@ function speakLongText(text) {
       const info = document.getElementById('info');
       if (info) info.style.display = 'none';
       document.getElementById('loader').style.display = 'flex';
+      showThinkingPlaceholder();
       // Enviar al webhook igual que en reconocimiento de voz
       const credentials = btoa(`${WEBHOOK_USER}:${WEBHOOK_PASS}`);
       fetch('https://tasks.nukeador.com/webhook/2d4dfc03-6c23-43ce-a419-c717c33799b5', {
@@ -237,6 +241,7 @@ function speakLongText(text) {
       })
         .then(res => res.json())
         .then(data => {
+          removeThinkingPlaceholder();
           document.getElementById('loader').style.display = 'none';
           // Mostrar de nuevo "Pulsa para hablar" solo si no estamos en modo texto
           if (textInputForm.style.display === 'none' && info) info.style.display = '';
@@ -260,6 +265,7 @@ function speakLongText(text) {
           }
         })
         .catch(() => {
+          removeThinkingPlaceholder();
           document.getElementById('loader').style.display = 'none';
           if (textInputForm.style.display === 'none' && info) info.style.display = '';
           addMessage('Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.', 'bot');
@@ -378,4 +384,25 @@ function speakLongText(text) {
     });
     updateSpeakerBtn();
     // Si quieres usar speakerActive para controlar la lectura, úsalo en speakLongText()
+
+    // --- Placeholder animado de "Pensando..." ---
+    function showThinkingPlaceholder() {
+      let existing = document.getElementById('thinkingPlaceholder');
+      if (!existing) {
+        const chatContainer = document.getElementById('chatContainer');
+        const div = document.createElement('div');
+        div.id = 'thinkingPlaceholder';
+        // Usar colores que aseguren contraste: verde oscuro en claro, verde claro en dark
+        div.className = 'thinking-placeholder';
+        div.innerHTML = '<span class="thinking-animated text-[#444] dark:text-[#eaf7ef]">Pensando</span>';
+        chatContainer.appendChild(div);
+        setTimeout(() => {
+          div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 100);
+      }
+    }
+    function removeThinkingPlaceholder() {
+      const existing = document.getElementById('thinkingPlaceholder');
+      if (existing) existing.remove();
+    }
   });

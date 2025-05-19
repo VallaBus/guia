@@ -187,7 +187,7 @@ body {
   }
   #textInput::placeholder {
     opacity: 1;
-    color: #8ca89a !important;
+    color: #667c72 !important;
     transition: opacity 0.2s, color 0.2s;
   }
   .dark #textInput::placeholder {
@@ -196,7 +196,7 @@ body {
   }
   #textInput:focus::placeholder {
     opacity: 1;
-    color: #b7e4c7 !important;
+    color: #667c72 !important;
   }
   #textInput:focus {
     background: transparent;
@@ -239,3 +239,50 @@ body {
     margin: 0 12px;
     white-space: nowrap;
   }
+
+.thinking-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 1.2em 0 1em 0;
+  background: none;
+  color: #185d39;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  text-align: center;
+  width: 100%;
+  max-width: 100%;
+}
+.dark .thinking-placeholder {
+  color: #b7e4c7;
+}
+.thinking-placeholder .thinking-animated {
+  display: inline-block;
+  background: linear-gradient(90deg, #778f80, #a8cab5, #778f80);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: dot-gradient 1.2s infinite linear;
+}
+
+.dark .thinking-placeholder .thinking-animated {
+  background: linear-gradient(90deg, #bbb, #787878, #bbb);
+}
+
+@keyframes dot-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-bubble {
+  margin-bottom: 1.2em !important;
+}
