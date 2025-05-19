@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Texto a Voz con Web Speech API</title>
+    <title>Asistente VallaBus - Preguntame sobre paradas, horarios y rutas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="config.js"></script>
@@ -13,9 +13,40 @@
   </head>
   <body class="bg-[#5f7262] dark:bg-[#1a2320] text-[#1e4636] dark:text-[#eaf7ef] min-h-screen flex flex-col justify-between font-sans" style="background: linear-gradient(135deg, #5f7262 60%, #34453a 100%); background-repeat: no-repeat; background-attachment: fixed;">
     <!-- Encabezado fijo -->
-    <header class="fixed top-0 left-0 right-0 bg-[#434f48] dark:bg-[#212d26] text-white py-3 z-40 shadow-md cursor-pointer" onclick="document.getElementById('chatContainer').scrollTo({top: 0, behavior: 'smooth'})">
-      <h1 class="text-xl font-bold text-center text-[#eaf7ef] dark:text-[#b7e4c7]">Asistente VallaBus</h1>
+    <header class="fixed top-0 left-0 right-0 bg-[#434f48] dark:bg-[#212d26] text-white py-3 z-40 shadow-md cursor-pointer flex items-center justify-center relative" onclick="document.getElementById('chatContainer').scrollTo({top: 0, behavior: 'smooth'})">
+      <h1 class="text-xl font-bold text-center text-[#eaf7ef] dark:text-[#b7e4c7] w-full">VallaBus</h1>
+      <button id="menuBtn" class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full p-2 bg-transparent hover:bg-[#5f7262]/30 focus:outline-none focus:ring-2 focus:ring-[#799385] text-2xl z-50 text-[#eaf7ef] dark:text-[#b7e4c7]" title="Abrir menú" type="button">
+        <i class="fa-solid fa-bars"></i>
+      </button>
     </header>
+    
+    <!-- Sidebar y overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-[100] transition-opacity duration-300 opacity-0 pointer-events-none"></div>
+    <aside id="sidebarMenu" class="fixed top-0 right-0 h-full w-64 max-w-[80vw] bg-[#434f48] dark:bg-[#212d26] text-[#eaf7ef] dark:text-[#b7e4c7] shadow-lg z-[101] transform translate-x-full transition-transform duration-300 flex flex-col">
+      <button id="closeSidebarBtn" class="self-end m-4 text-2xl text-[#eaf7ef] dark:text-[#b7e4c7] hover:text-[#228b54] focus:outline-none" title="Cerrar menú">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <nav class="flex-1 flex flex-col items-start pt-4 gap-2 px-2">
+        <a href="https://vallabus.com" target="_blank" rel="noopener" class="text-lg font-semibold text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline flex items-center gap-2 px-6 py-2 w-full">
+          <i class="fa-solid fa-bus"></i> Volver a VallaBus
+        </a>
+        <a href="https://vallabus.com/#/cercanas" id="nearestStopsButton" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+          <i class="fa-solid fa-location-dot"></i> Paradas cercanas
+        </a>
+        <a href="https://vallabus.com/#/rutas" id="routesButton" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+          <i class="fa-solid fa-route"></i> Planifica tu ruta
+        </a>
+        <a href="https://vallabus.com/#/lineas" id="viewLinesButton" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+          <i class="fa-solid fa-list"></i> Ver todas las líneas
+        </a>
+        <a href="https://vallabus.com/informes/" id="informesButton" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+          <i class="fa-solid fa-file-lines"></i> Informes de calidad
+        </a>
+        <a href="https://t.me/vallabusapp" id="communityButton" target="_blank" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+          <i class="fa-brands fa-telegram"></i> Comunidad
+        </a>
+      </nav>
+    </aside>
     
     <div class="relative flex-1 w-full max-w-md mx-auto px-2 overflow-y-auto space-y-2 pt-16" id="chatContainer">
       <div id="placeholderVallaBus" class="placeholder-vallabus text-white dark:text-white text-base font-bold">
@@ -47,5 +78,45 @@
   <button id="stopBtn" class="rounded-lg bg-[#b7e4c7] dark:bg-[#23382b] text-[#228b54] dark:text-[#b7e4c7] font-semibold py-2 px-4 shadow transition hidden">Detener audio</button>
 </div>
     <script src="js/main.js"></script>
+    <script>
+      // Sidebar logic
+      const menuBtn = document.getElementById('menuBtn');
+      const sidebar = document.getElementById('sidebarMenu');
+      const overlay = document.getElementById('sidebarOverlay');
+      const closeBtn = document.getElementById('closeSidebarBtn');
+
+      function openSidebar() {
+        sidebar.classList.remove('translate-x-full');
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+        overlay.classList.add('opacity-100');
+      }
+      function closeSidebar() {
+        sidebar.classList.add('translate-x-full');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        overlay.classList.remove('opacity-100');
+      }
+      menuBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        openSidebar();
+      });
+      closeBtn.addEventListener('click', closeSidebar);
+      overlay.addEventListener('click', closeSidebar);
+      // Cerrar con swipe (touch)
+      let startX = null;
+      sidebar.addEventListener('touchstart', e => {
+        if (e.touches.length === 1) startX = e.touches[0].clientX;
+      });
+      sidebar.addEventListener('touchmove', e => {
+        if (startX !== null) {
+          const deltaX = e.touches[0].clientX - startX;
+          if (deltaX < -60) closeSidebar();
+        }
+      });
+      sidebar.addEventListener('touchend', () => { startX = null; });
+      // Cerrar con Escape
+      window.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeSidebar();
+      });
+    </script>
 </body>
 </html>
