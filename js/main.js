@@ -350,7 +350,8 @@ function speakLongText(text) {
 
     // --- Botón altavoz: activar/desactivar lectura en alto ---
     const speakerBtn = document.getElementById('speakerBtn');
-    let speakerActive = true;
+    // Leer preferencia de altavoz de localStorage (por defecto true)
+    let speakerActive = localStorage.getItem('speakerActive') === null ? true : localStorage.getItem('speakerActive') === 'true';
     function updateSpeakerBtn() {
       const icon = document.getElementById('speakerIcon');
       if (speakerActive) {
@@ -366,6 +367,8 @@ function speakLongText(text) {
     speakerBtn.addEventListener('click', function(e) {
       e.preventDefault();
       speakerActive = !speakerActive;
+      // Guardar preferencia en localStorage
+      localStorage.setItem('speakerActive', speakerActive);
       updateSpeakerBtn();
       if (!speakerActive) {
         speakLongTextCancelado = true;
