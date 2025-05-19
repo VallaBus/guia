@@ -187,14 +187,16 @@ body {
   }
   #textInput::placeholder {
     opacity: 1;
-    transition: opacity 0.2s;
+    color: #8ca89a !important;
+    transition: opacity 0.2s, color 0.2s;
   }
   .dark #textInput::placeholder {
+    color: #7be495 !important;
     opacity: 1;
   }
   #textInput:focus::placeholder {
-    opacity: 0;
-    transition: opacity 0.2s;
+    opacity: 1;
+    color: #b7e4c7 !important;
   }
   #textInput:focus {
     background: transparent;
