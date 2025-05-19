@@ -12,6 +12,8 @@ body {
   }
   #micBtn.recording {
     animation: pulse 1.2s infinite;
+    /* Más iluminado y con resplandor */
+    box-shadow: 0 0 0 10px #aaffcc, 0 0 32px 12px #aaffcc99;
   }
   #micBtn::after {
     content: '';
@@ -31,12 +33,13 @@ body {
   }
   #micBtn.recording::after {
     animation: mic-wave 1.2s infinite;
-    opacity: 0.7;
+    opacity: 0.95;
+    filter: brightness(2) drop-shadow(0 0 24px #aaffcc);
   }
   @keyframes mic-wave {
-    0% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
-    70% { opacity: 0.10; transform: translate(-50%, -50%) scale(1.18); }
-    100% { opacity: 0.0; transform: translate(-50%, -50%) scale(1.3); }
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: brightness(2); background: radial-gradient(circle, #aaffcc 0%, transparent 80%); }
+    70% { opacity: 0.22; transform: translate(-50%, -50%) scale(1.28); filter: brightness(1.3); background: radial-gradient(circle, #aaffcc88 0%, transparent 90%); }
+    100% { opacity: 0.0; transform: translate(-50%, -50%) scale(1.45); filter: brightness(1); background: radial-gradient(circle, #aaffcc00 0%, transparent 100%); }
   }
   @keyframes pulse {
     0% { box-shadow: 0 0 0 0 #b7e4c733; }
@@ -116,6 +119,21 @@ body {
   }
   #keyboardBtn:active, #micBtn:active {
     box-shadow: 0 0 0 2px #b7e4c7;
+  }
+  #speakerBtn {
+    position: absolute;
+    left: 0;
+    top: 70%;
+    transform: translateY(-50%);
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px;
+    min-height: 50px;
+    margin: 0;
+    pointer-events: auto;
+    transition: box-shadow 0.2s;
+    z-index: 110 !important;
+    font-size: 1.3rem !important;
   }
   .bottom-bar-vallabus {
     padding-top: 60px !important;

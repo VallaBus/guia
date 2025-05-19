@@ -130,56 +130,43 @@ document.addEventListener('DOMContentLoaded', function() {
     let speakLongTextCancelado = false; // GLOBAL
 
 function speakLongText(text) {
-const frases = splitTextForSpeech(text);
-let idx = 0;
-speakLongTextCancelado = false;
-// Actualizar el estado a "hablando"
-setSpeakingState(true);
-
-function speakNext() {
-  // Refuerzo: comprobar justo antes de hablar
-  if (speakLongTextCancelado || idx >= frases.length) {
-    setSpeakingState(false);
-    return;
-  }
-  let frase = frases[idx].trim();
-  if (frase.includes('___ENLACE___')) {
-    frase = 'Consulta el enlace.';
-  }
-  utteranceActual = new SpeechSynthesisUtterance(frase);
-  utteranceActual.lang = 'es-ES';
-  const vocesEs = voices.filter(voice => voice.lang.startsWith('es'));
-  if (vocesEs.length > 0) utteranceActual.voice = vocesEs[0];
-  utteranceActual.volume = 1;
-  utteranceActual.rate = 1;
-  utteranceActual.pitch = 1;
-  utteranceActual.onstart = () => {
-    setSpeakingState(true);
-  };
-  utteranceActual.onend = () => {
-    utteranceActual = null;
-    idx++;
-    // Refuerzo: comprobar justo antes de lanzar el siguiente fragmento
-    if (speakLongTextCancelado) {
+  if (!speakerActive) return; // No leer en alto si está desactivado
+  const frases = splitTextForSpeech(text);
+  let idx = 0;
+  speakLongTextCancelado = false;
+  setSpeakingState(true);
+  function speakNext() {
+    if (speakLongTextCancelado || idx >= frases.length) {
       setSpeakingState(false);
       return;
     }
-    speakNext();
-  };
-  utteranceActual.onerror = (e) => {
-    utteranceActual = null;
-    console.log('Error en síntesis:', e.error);
-    idx++;
-    // Refuerzo: comprobar justo antes de lanzar el siguiente fragmento
-    if (speakLongTextCancelado) {
-      setSpeakingState(false);
-      return;
+    let frase = frases[idx].trim();
+    if (frase.includes('___ENLACE___')) {
+      frase = 'Consulta el enlace.';
     }
-    speakNext();
-  };
-  window.speechSynthesis.speak(utteranceActual);
-}
-speakNext();
+    utteranceActual = new SpeechSynthesisUtterance(frase);
+    utteranceActual.lang = 'es-ES';
+    const vocesEs = voices.filter(voice => voice.lang.startsWith('es'));
+    if (vocesEs.length > 0) utteranceActual.voice = vocesEs[0];
+    utteranceActual.volume = 1;
+    utteranceActual.rate = 1;
+    utteranceActual.pitch = 1;
+    utteranceActual.onstart = () => { setSpeakingState(true); };
+    utteranceActual.onend = () => {
+      utteranceActual = null;
+      idx++;
+      if (speakLongTextCancelado) { setSpeakingState(false); return; }
+      speakNext();
+    };
+    utteranceActual.onerror = (e) => {
+      utteranceActual = null;
+      idx++;
+      if (speakLongTextCancelado) { setSpeakingState(false); return; }
+      speakNext();
+    };
+    window.speechSynthesis.speak(utteranceActual);
+  }
+  speakNext();
     }
     // --- Alternar modo texto/micrófono ---
     const keyboardBtn = document.getElementById('keyboardBtn');
@@ -188,9 +175,11 @@ speakNext();
 
     function setTextMode(active) {
       const info = document.getElementById('info');
+      const speakerBtn = document.getElementById('speakerBtn');
       if (active) {
         micBtn.style.display = 'none';
         keyboardBtn.style.display = 'none'; // Ocultamos el botón de teclado en modo texto
+        if (speakerBtn) speakerBtn.style.display = 'none';
         textInputForm.style.display = '';
         if (info) info.style.display = 'none';
         // También ocultar info si loader está visible
@@ -200,6 +189,7 @@ speakNext();
       } else {
         micBtn.style.display = '';
         keyboardBtn.style.display = '';
+        if (speakerBtn) speakerBtn.style.display = '';
         textInputForm.style.display = 'none';
         // Solo mostrar info si loader está oculto y no estamos en modo texto
         const loader = document.getElementById('loader');
@@ -363,4 +353,32 @@ speakNext();
       window.speechSynthesis.cancel();
       setSpeakingState(false);
     });
+
+    // --- Botón altavoz: activar/desactivar lectura en alto ---
+    const speakerBtn = document.getElementById('speakerBtn');
+    let speakerActive = true;
+    function updateSpeakerBtn() {
+      const icon = document.getElementById('speakerIcon');
+      if (speakerActive) {
+        speakerBtn.classList.add('bg-[#eaf7ef]', 'text-[#434f48]', 'border-2', 'border-[#698374]', 'dark:bg-[#355347]', 'dark:text-[#b7e4c7]', 'dark:border-[#23382b]');
+        speakerBtn.classList.remove('bg-[#b7e4c7]', 'text-[#228b54]', 'dark:bg-[#23382b]', 'dark:text-[#7be495]');
+        icon.className = 'fa-solid fa-volume-up';
+      } else {
+        speakerBtn.classList.remove('bg-[#eaf7ef]', 'text-[#434f48]', 'dark:bg-[#355347]', 'dark:text-[#b7e4c7]');
+        speakerBtn.classList.add('bg-[#b7e4c7]', 'text-[#228b54]', 'dark:bg-[#23382b]', 'dark:text-[#7be495]');
+        icon.className = 'fa-solid fa-volume-xmark';
+      }
+    }
+    speakerBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      speakerActive = !speakerActive;
+      updateSpeakerBtn();
+      if (!speakerActive) {
+        speakLongTextCancelado = true;
+        window.speechSynthesis.cancel();
+        setSpeakingState(false);
+      }
+    });
+    updateSpeakerBtn();
+    // Si quieres usar speakerActive para controlar la lectura, úsalo en speakLongText()
   });
