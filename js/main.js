@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
           .then(data => {
             removeThinkingPlaceholder();
             document.getElementById('loader').style.display = 'none';
-            let respuesta = data.output || 'Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.';
+            let respuesta = data.output || getErrorWithRestartButton();
             // Reemplazar todas las URLs por un marcador especial para la voz
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             // Eliminar emojis para la voz (sin eliminar números)
@@ -243,9 +243,8 @@ function speakLongText(text) {
         .then(data => {
           removeThinkingPlaceholder();
           document.getElementById('loader').style.display = 'none';
-          // Mostrar de nuevo "Pulsa para hablar" solo si no estamos en modo texto
           if (textInputForm.style.display === 'none' && info) info.style.display = '';
-          let respuesta = data.output || 'Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.';
+          let respuesta = data.output || getErrorWithRestartButton();
           const urlRegex = /(https?:\/\/[^\s]+)/g;
           const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
           let respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
@@ -268,7 +267,7 @@ function speakLongText(text) {
           removeThinkingPlaceholder();
           document.getElementById('loader').style.display = 'none';
           if (textInputForm.style.display === 'none' && info) info.style.display = '';
-          addMessage('Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.', 'bot');
+          addMessage(getErrorWithRestartButton(), 'bot');
         });
     });
 
@@ -405,4 +404,24 @@ function speakLongText(text) {
       const existing = document.getElementById('thinkingPlaceholder');
       if (existing) existing.remove();
     }
+
+    // Utilidad para crear el mensaje de error con botón de reinicio
+    function getErrorWithRestartButton() {
+      // Oculta los botones de micro y teclado
+      setTimeout(() => {
+        const micBtn = document.getElementById('micBtn');
+        const keyboardBtn = document.getElementById('keyboardBtn');
+        if (micBtn) micBtn.style.display = 'none';
+        if (keyboardBtn) keyboardBtn.style.display = 'none';
+      }, 50);
+      return `Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.<br><button id="restartBtn" class="mt-3 px-4 py-2 bg-[#228b54] dark:bg-[#7be495] text-white dark:text-[#185d39] rounded-lg flex items-center gap-2 mx-auto" style="display:block;font-size:1rem;"><i class='fa-solid fa-rotate-right'></i> Reiniciar la conversación</button>`;
+    }
+
+    // Delegar el click del botón de reinicio
+    // (como los mensajes se agregan dinámicamente)
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.id === 'restartBtn') {
+        location.reload();
+      }
+    });
   });
