@@ -131,9 +131,18 @@ body {
     min-height: 50px;
     margin: 0;
     pointer-events: auto;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, top 0.2s;
     z-index: 110 !important;
     font-size: 1.3rem !important;
+  }
+  body.text-mode-only #speakerBtn {
+    transform: translate(0%, -275%) !important;
+  }
+  body.text-mode-only #stopBtn {
+      display: none !important;
+  }
+body.text-mode-only .loader {
+      display: none !important;
   }
   .bottom-bar-vallabus {
     padding-top: 60px !important;
