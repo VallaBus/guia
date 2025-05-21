@@ -69,12 +69,12 @@
     </aside>
     
     <div class="relative flex-1 w-full max-w-md mx-auto px-2 overflow-y-auto space-y-2 pt-16" id="chatContainer">
-      <div id="placeholderVallaBus" class="placeholder-vallabus text-white dark:text-white text-base font-bold">
+      <div id="placeholderVallaBus" class="placeholder-vallabus text-white dark:text-white text-base font-bold" style="display:none;">
         <p class="text-white dark:text-white text-4xl">¡Hola! <br> <span class="text-3xl">Pregúntame sobre paradas, horarios o cómo llegar a un destino</span></p>
         <p class="text-white/70 dark:text-white/60 text-sm mt-8 font-normal">Nota: Servicio en pruebas limitado mientras medimos su viabilidad</p>
-        <button onclick="window.open('https://t.me/vallabusapp/4649', '_blank')" class="inline-block mt-6 px-4 py-2 rounded-lg bg-[#434f48] dark:bg-[#23382b] text-[#eaf7ef] dark:text-[#b7e4c7] text-base font-semibold shadow hover:bg-[#5f7262] dark:hover:bg-[#355347] transition focus:outline-none focus:ring-2 focus:ring-[#799385]">
+        <a id="inviteBtn" href="https://t.me/vallabusapp/4649" target="_blank" rel="noopener" class="inline-block mt-6 px-4 py-2 rounded-lg bg-[#434f48] dark:bg-[#23382b] text-[#eaf7ef] dark:text-[#b7e4c7] text-base font-semibold shadow hover:bg-[#5f7262] dark:hover:bg-[#355347] transition focus:outline-none focus:ring-2 focus:ring-[#799385]" style="display:none;">
           Pide una invitación aquí
-        </button>
+        </a>
       </div>
       <!-- Los mensajes se irán agregando aquí dinámicamente -->
     </div>
@@ -151,6 +151,50 @@
       // Cerrar con Escape
       window.addEventListener('keydown', e => {
         if (e.key === 'Escape') closeSidebar();
+      });
+
+      // Ocultar el botón de invitación si el usuario está logeado
+      document.addEventListener('DOMContentLoaded', async function() {
+        if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+          const isAuthenticated = await window.auth0Client.isAuthenticated();
+          const inviteBtn = document.getElementById('inviteBtn');
+          if (inviteBtn) inviteBtn.style.display = isAuthenticated ? 'none' : '';
+        } else {
+          // Si auth0Client aún no está listo, esperar a que lo esté
+          const checkAuth = setInterval(async () => {
+            if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+              clearInterval(checkAuth);
+              const isAuthenticated = await window.auth0Client.isAuthenticated();
+              const inviteBtn = document.getElementById('inviteBtn');
+              if (inviteBtn) inviteBtn.style.display = isAuthenticated ? 'none' : '';
+            }
+          }, 200);
+        }
+      });
+
+      // Mostrar/ocultar placeholder e invitación solo cuando Auth0 esté listo
+      window.addEventListener('DOMContentLoaded', function() {
+        function showPlaceholderAndInvite(isAuthenticated) {
+          var placeholder = document.getElementById('placeholderVallaBus');
+          var inviteBtn = document.getElementById('inviteBtn');
+          if (placeholder) placeholder.style.display = '';
+          if (inviteBtn) inviteBtn.style.display = isAuthenticated ? 'none' : '';
+        }
+        if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+          window.auth0Client.isAuthenticated().then(isAuthenticated => {
+            showPlaceholderAndInvite(isAuthenticated);
+          });
+        } else {
+          // Esperar a que auth0Client esté listo
+          const checkAuth = setInterval(function() {
+            if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+              clearInterval(checkAuth);
+              window.auth0Client.isAuthenticated().then(isAuthenticated => {
+                showPlaceholderAndInvite(isAuthenticated);
+              });
+            }
+          }, 100);
+        }
       });
     </script>
 </body>

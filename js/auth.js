@@ -69,9 +69,15 @@ window.onload = async () => {
     } else {
       loginMainBtn.style.display = 'block';
     }
+    // Mostrar el enlace de invitación si existe
+    const inviteBtn = document.getElementById('inviteBtn');
+    if (inviteBtn) inviteBtn.style.display = '';
   } else {
     // Solo ocultar el botón de login, pero NO forzar display de los demás (deja que main.js controle)
     if (loginMainBtn) loginMainBtn.style.display = 'none';
+    // Ocultar el enlace de invitación si existe
+    const inviteBtn = document.getElementById('inviteBtn');
+    if (inviteBtn) inviteBtn.style.display = 'none';
   }
 
   // Asigna listeners a los botones de login y logout SOLO si existen
