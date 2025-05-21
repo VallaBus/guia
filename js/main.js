@@ -165,7 +165,12 @@ document.addEventListener('DOMContentLoaded', function() {
           // Eliminar emojis para la voz (sin eliminar números)
           // Regex seguro para solo emojis (sin error de rango)
           const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
-          let respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
+          let respuestaParaVoz;
+          if (respuesta === getErrorWithRestartButton()) {
+            respuestaParaVoz = getErrorWithRestartButton.voice;
+          } else {
+            respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
+          }
           // Para la vista, mostrar enlaces clicables con color verde acorde al theme
           const respuestaConEnlaces = respuesta.replace(urlRegex, url => {
             try {
@@ -343,7 +348,12 @@ document.addEventListener('DOMContentLoaded', function() {
       let respuesta = data.output || getErrorWithRestartButton();
       const urlRegex = /(https?:\/\/[^\s]+)/g;
       const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
-      let respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
+      let respuestaParaVoz;
+      if (respuesta === getErrorWithRestartButton()) {
+        respuestaParaVoz = getErrorWithRestartButton.voice;
+      } else {
+        respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
+      }
       const respuestaConEnlaces = respuesta.replace(urlRegex, url => {
         try {
           const urlObj = new URL(url);
@@ -362,7 +372,8 @@ document.addEventListener('DOMContentLoaded', function() {
       removeThinkingPlaceholder();
       document.getElementById('loader').style.display = 'none';
       if (textInputForm.style.display === 'none' && info) info.style.display = '';
-      addMessage(getErrorWithRestartButton(), 'bot');
+      const errorMsg = getErrorWithRestartButton();
+      addMessage(errorMsg, 'bot', getErrorWithRestartButton.voice);
     }
   });
 
@@ -582,6 +593,9 @@ document.addEventListener('DOMContentLoaded', function() {
       if (micBtn) micBtn.style.display = 'none';
       if (keyboardBtn) keyboardBtn.style.display = 'none';
     }, 50);
+    // Mensaje solo texto para voz
+    getErrorWithRestartButton.voice = 'Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.';
+    // Mensaje HTML para la vista
     return `Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.<br><button id="restartBtn" class="mt-3 px-4 py-2 bg-[#228b54] dark:bg-[#7be495] text-white dark:text-[#185d39] rounded-lg flex items-center gap-2 mx-auto" style="display:block;font-size:1rem;"><i class='fa-solid fa-rotate-right'></i> Reiniciar la conversación</button>`;
   }
 
