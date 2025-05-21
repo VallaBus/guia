@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
           headers['Authorization'] = `Bearer ${token}`;
         }
         try {
-          const res = await fetch('https://tasks.nukeador.com/webhook/2d4dfc03-6c23-43ce-a419-c717c33799b5', {
+          const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
             method: 'POST',
             headers,
             body: JSON.stringify({ texto: transcript, usuario_id: usuarioId })
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
               return url;
             }
           }).replace(/\n/g, '<br>');
-          addMessage(respuestaConEnlaces, 'bot');
+          addMessage(respuestaConEnlaces, 'bot', respuesta);
           respuestaPendiente = respuestaParaVoz;
           if (recognitionEnded && respuestaPendiente) {
             speakLongText(respuestaPendiente);
@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     try {
-      const res = await fetch('https://tasks.nukeador.com/webhook/2d4dfc03-6c23-43ce-a419-c717c33799b5', {
+      const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
         method: 'POST',
         headers,
         body
@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
           return url;
         }
       }).replace(/\n/g, '<br>');
-      addMessage(respuestaConEnlaces, 'bot');
+      addMessage(respuestaConEnlaces, 'bot', respuesta);
       respuestaPendiente = respuestaParaVoz;
       if (recognitionEnded && respuestaPendiente) {
         speakLongText(respuestaPendiente);
@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // --- FIN: Lógica de tema eliminada ---
 
   // Reemplazar la lógica de mostrar mensajes en userBubble/chatBubble por agregar elementos al chatContainer
-  function addMessage(text, sender) {
+  function addMessage(text, sender, originalText) {
     const chatContainer = document.getElementById('chatContainer');
     const div = document.createElement('div');
     let inner = text;
@@ -409,6 +409,10 @@ document.addEventListener('DOMContentLoaded', function() {
       ? 'chat-bubble user-bubble bg-[#c0d6c5] dark:bg-[#23382b] text-[#1e4636] dark:text-[#eaf7ef] border border-[#d1f2e0] dark:border-[#3a4d44] rounded-2xl px-4 py-2 text-base w-fit self-end shadow-sm max-w-[90%] mb-3 mr-2'
       : 'chat-bubble bg-[#f8fef9] dark:bg-[#2e4d3a] text-[#185d39] dark:text-[#b7e4c7] border border-[#d1f2e0] dark:border-[#3a4d44] rounded-2xl px-4 py-2 text-lg w-fit shadow-sm max-w-[90%] mb-3 ml-2';
     div.innerHTML = inner;
+    // Guardar el texto original (con URLs completas) para copiar/compartir
+    if (sender === 'bot') {
+      div.setAttribute('data-msg-original', (originalText || text).replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''));
+    }
     chatContainer.appendChild(div);
     setTimeout(() => {
       div.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -421,7 +425,8 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(() => {
         const copyBtn = div.querySelector('.copy-btn');
         const shareBtn = div.querySelector('.share-btn');
-        const msgText = div.querySelector('.msg-text').innerText;
+        // Usar el texto original guardado en el atributo
+        const msgText = div.getAttribute('data-msg-original') || div.querySelector('.msg-text').innerText;
         function showTooltip(btn, msg) {
           let tip = document.createElement('div');
           tip.className = 'msg-tooltip';
