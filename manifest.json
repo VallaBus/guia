@@ -1,0 +1,24 @@
+{
+  "name": "Guía VallaBus",
+  "short_name": "Guía VallaBus",
+  "description": "Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#228b54",
+  "theme_color": "#228b54",
+  "dark_background_color": "#212d26",
+  "dark_theme_color": "#212d26",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "img/sparkles.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/sparkles.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
