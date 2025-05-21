@@ -11,13 +11,13 @@
     <meta name="theme-color" content="#212d26" media="(prefers-color-scheme: dark)">
     <meta property="og:title" content="Guía VallaBus - Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid">
     <meta property="og:description" content="Asistente conversacional para paradas, horarios y rutas de bus en Valladolid. ¡Pregunta lo que quieras!">
-    <meta property="og:image" content="https://vallabus.com/img/sparkles.png">
-    <meta property="og:url" content="https://vallabus.com/asistente">
+    <meta property="og:image" content="https://guia.vallabus.com/img/sparkles.png">
+    <meta property="og:url" content="https://guia.vallabus.com/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Guía VallaBus - Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid">
     <meta name="twitter:description" content="Asistente conversacional para paradas, horarios y rutas de bus en Valladolid. ¡Pregunta lo que quieras!">
-    <meta name="twitter:image" content="https://vallabus.com/img/sparkles.png">
+    <meta name="twitter:image" content="https://guia.vallabus.com/img/sparkles.png">
     <title>Guía VallaBus - Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -48,6 +48,9 @@
         <a href="https://vallabus.com" target="_blank" rel="noopener" class="text-lg font-semibold text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline flex items-center gap-2 px-6 py-2 w-full">
           <i class="fa-solid fa-bus"></i> Volver a VallaBus
         </a>
+        <a href="https://t.me/vallabusapp/4649" id="feedbackButton" target="_blank" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+          <i class="fa-regular fa-comment-dots"></i> Danos tu opinión
+        </a>
         <a href="https://vallabus.com/#/cercanas" id="nearestStopsButton" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
           <i class="fa-solid fa-location-dot"></i> Paradas cercanas
         </a>
@@ -69,6 +72,7 @@
     <div class="relative flex-1 w-full max-w-md mx-auto px-2 overflow-y-auto space-y-2 pt-16" id="chatContainer">
       <div id="placeholderVallaBus" class="placeholder-vallabus text-white dark:text-white text-base font-bold">
         <p class="text-white dark:text-white text-4xl">¡Hola! <br> <span class="text-3xl">Pregúntame sobre paradas, horarios o cómo llegar a un destino</span></p>
+        <p class="text-white/70 dark:text-white/60 text-sm mt-8 font-normal">Nota: Servicio en pruebas limitado mientras medimos su viabilidad</p>
       </div>
       <!-- Los mensajes se irán agregando aquí dinámicamente -->
     </div>
