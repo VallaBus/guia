@@ -3,6 +3,15 @@ body {
   min-height: 100dvh;
 }
 
+
+header h1 {
+  background-image: url('../img/sparkles.png');
+  background-size: 25px 25px;
+  background-repeat: no-repeat;
+  background-position: 15px center;
+  opacity: 0.8;
+}
+
 @media (prefers-color-scheme: dark) {
     body {
       background: linear-gradient(135deg, #1a2320 60%, #121814 100%) !important;
@@ -294,4 +303,20 @@ body.text-mode-only .loader {
 
 .chat-bubble {
   margin-bottom: 1.2em !important;
+}
+
+#placeholderVallaBus p span {
+  line-height: 1.5;
+  display: inline-block;
+  margin-top: 1em;
+  opacity: 0.95;
+}
+
+.hidden {
+  display: none;
+}
+
+label {
+  margin-bottom: 10px;
+  display: block;
 }

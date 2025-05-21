@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('[VALLABUS] DOMContentLoaded fired');
   // --- Variables y elementos principales ---
   const micBtn = document.getElementById('micBtn');
   const micIcon = document.getElementById('micIcon');
@@ -15,58 +14,40 @@ document.addEventListener('DOMContentLoaded', function() {
   let recognitionEnded = true;
   let utteranceActual = null;
   let speakLongTextCancelado = false;
-  // LOG para ver si los elementos existen
-  console.log('[VALLABUS] micBtn:', micBtn);
-  console.log('[VALLABUS] keyboardBtn:', keyboardBtn);
-  console.log('[VALLABUS] textInputForm:', textInputForm);
-  console.log('[VALLABUS] textInput:', textInput);
 
   // --- Detección estricta de soporte Speech API ---
   function isSpeechApiReallySupported() {
-    console.log('[VALLABUS] UserAgent:', navigator.userAgent);
     try {
       if ('webkitSpeechRecognition' in window) {
-        console.log('[VALLABUS] webkitSpeechRecognition found in window');
         new window.webkitSpeechRecognition();
-        console.log('[VALLABUS] webkitSpeechRecognition instanciated OK');
         return true;
       }
       if ('SpeechRecognition' in window && typeof window.SpeechRecognition === 'function') {
-        console.log('[VALLABUS] SpeechRecognition found in window');
         new window.SpeechRecognition();
-        console.log('[VALLABUS] SpeechRecognition instanciated OK');
         return true;
       }
-      console.log('[VALLABUS] No SpeechRecognition implementation found');
     } catch (e) {
-      console.log('[VALLABUS] SpeechRecognition instantiation error:', e);
       return false;
     }
     return false;
   }
 
   const speechSupported = isSpeechApiReallySupported();
-  console.log('[VALLABUS] speechSupported:', speechSupported);
   if (!speechSupported) {
     if (micBtn) {
       micBtn.style.display = 'none';
-      console.log('[VALLABUS] Ocultando micBtn');
     }
     if (keyboardBtn) {
       keyboardBtn.style.display = 'none';
-      console.log('[VALLABUS] Ocultando keyboardBtn');
     }
     if (textInputForm) {
       textInputForm.style.display = '';
-      console.log('[VALLABUS] Mostrando textInputForm');
     }
     if (textInput) {
       textInput.focus();
-      console.log('[VALLABUS] Foco en textInput');
     }
     if (info) {
       info.style.display = 'none';
-      console.log('[VALLABUS] Ocultando info (Pulsa para hablar)');
     }
     document.body.classList.add('text-mode-only');
   }
@@ -99,16 +80,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (parent) {
       parent.style.position = 'relative';
       parent.appendChild(tooltipDiv);
-      console.log('[VALLABUS] Mostrando tooltip de dictado');
-    } else {
-      console.log('[VALLABUS] No se pudo mostrar tooltip: parent no existe');
     }
   }
   function hideTextInputTooltip() {
     if (tooltipDiv) {
       tooltipDiv.remove();
       tooltipDiv = null;
-      console.log('[VALLABUS] Ocultando tooltip de dictado');
     }
   }
   if (!speechSupported && textInput) {
@@ -119,7 +96,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
     textInput.addEventListener('focus', showTextInputTooltip);
     textInput.addEventListener('blur', hideTextInputTooltip);
-    console.log('[VALLABUS] Listeners de tooltip añadidos a textInput');
   }
 
   // Generar o recuperar un id único de usuario
@@ -167,19 +143,20 @@ document.addEventListener('DOMContentLoaded', function() {
       addMessage(transcript, 'user');
       recognition.stop(); // Detener reconocimiento inmediatamente
       // Enviar al webhook
-      // Codificar credenciales en base64 para Basic Auth
-      const credentials = btoa(`${WEBHOOK_USER}:${WEBHOOK_PASS}`);
       showThinkingPlaceholder();
-      fetch('https://tasks.nukeador.com/webhook/2d4dfc03-6c23-43ce-a419-c717c33799b5', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${credentials}`
-        },
-        body: JSON.stringify({ texto: transcript, usuario_id: usuarioId })
-      })
-        .then(res => res.json())
-        .then(data => {
+      (async () => {
+        let headers = { 'Content-Type': 'application/json' };
+        if (window.auth0Client && await window.auth0Client.isAuthenticated()) {
+          const token = await window.auth0Client.getTokenSilently();
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        try {
+          const res = await fetch('https://tasks.nukeador.com/webhook/2d4dfc03-6c23-43ce-a419-c717c33799b5', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ texto: transcript, usuario_id: usuarioId })
+          });
+          const data = await res.json();
           removeThinkingPlaceholder();
           document.getElementById('loader').style.display = 'none';
           let respuesta = data.output || getErrorWithRestartButton();
@@ -204,12 +181,12 @@ document.addEventListener('DOMContentLoaded', function() {
             speakLongText(respuestaPendiente);
             respuestaPendiente = null;
           }
-        })
-        .catch(err => {
+        } catch (err) {
           removeThinkingPlaceholder();
           document.getElementById('loader').style.display = 'none';
           info.textContent = 'Error al procesar la consulta.';
-        });
+        }
+      })();
     };
     recognition.onerror = (event) => {
       info.textContent = 'Error: ' + event.error;
@@ -332,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Enviar consulta por texto
-  textInputForm.addEventListener('submit', function(e) {
+  textInputForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     const value = textInput.value.trim();
     if (!value) return;
@@ -346,46 +323,47 @@ document.addEventListener('DOMContentLoaded', function() {
     if (info) info.style.display = 'none';
     document.getElementById('loader').style.display = 'flex';
     showThinkingPlaceholder();
-    // Enviar al webhook igual que en reconocimiento de voz
-    const credentials = btoa(`${WEBHOOK_USER}:${WEBHOOK_PASS}`);
-    fetch('https://tasks.nukeador.com/webhook/2d4dfc03-6c23-43ce-a419-c717c33799b5', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${credentials}`
-      },
-      body: JSON.stringify({ texto: value, usuario_id: usuarioId })
-    })
-      .then(res => res.json())
-      .then(data => {
-        removeThinkingPlaceholder();
-        document.getElementById('loader').style.display = 'none';
-        if (textInputForm.style.display === 'none' && info) info.style.display = '';
-        let respuesta = data.output || getErrorWithRestartButton();
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
-        let respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
-        const respuestaConEnlaces = respuesta.replace(urlRegex, url => {
-          try {
-            const urlObj = new URL(url);
-            return `<a href="${url}" target="_blank" rel="noopener" class="text-[#228b54] dark:text-[#7be495] underline">${urlObj.hostname}</a>`;
-          } catch {
-            return url;
-          }
-        }).replace(/\n/g, '<br>');
-        addMessage(respuestaConEnlaces, 'bot');
-        respuestaPendiente = respuestaParaVoz;
-        if (recognitionEnded && respuestaPendiente) {
-          speakLongText(respuestaPendiente);
-          respuestaPendiente = null;
-        }
-      })
-      .catch(() => {
-        removeThinkingPlaceholder();
-        document.getElementById('loader').style.display = 'none';
-        if (textInputForm.style.display === 'none' && info) info.style.display = '';
-        addMessage(getErrorWithRestartButton(), 'bot');
+    // Enviar al webhook: si logueado, Bearer; si no, solo Content-Type
+    let headers = { 'Content-Type': 'application/json' };
+    let body = JSON.stringify({ texto: value, usuario_id: usuarioId });
+    if (window.auth0Client && await window.auth0Client.isAuthenticated()) {
+      const token = await window.auth0Client.getTokenSilently();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    try {
+      const res = await fetch('https://tasks.nukeador.com/webhook/2d4dfc03-6c23-43ce-a419-c717c33799b5', {
+        method: 'POST',
+        headers,
+        body
       });
+      const data = await res.json();
+      removeThinkingPlaceholder();
+      document.getElementById('loader').style.display = 'none';
+      if (textInputForm.style.display === 'none' && info) info.style.display = '';
+      let respuesta = data.output || getErrorWithRestartButton();
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
+      let respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
+      const respuestaConEnlaces = respuesta.replace(urlRegex, url => {
+        try {
+          const urlObj = new URL(url);
+          return `<a href="${url}" target="_blank" rel="noopener" class="text-[#228b54] dark:text-[#7be495] underline">${urlObj.hostname}</a>`;
+        } catch {
+          return url;
+        }
+      }).replace(/\n/g, '<br>');
+      addMessage(respuestaConEnlaces, 'bot');
+      respuestaPendiente = respuestaParaVoz;
+      if (recognitionEnded && respuestaPendiente) {
+        speakLongText(respuestaPendiente);
+        respuestaPendiente = null;
+      }
+    } catch {
+      removeThinkingPlaceholder();
+      document.getElementById('loader').style.display = 'none';
+      if (textInputForm.style.display === 'none' && info) info.style.display = '';
+      addMessage(getErrorWithRestartButton(), 'bot');
+    }
   });
 
   // Mostrar solo uno de los botones según modo al cargar
