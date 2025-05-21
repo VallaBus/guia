@@ -588,18 +588,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Utilidad para crear el mensaje de error con botón de reinicio
   function getErrorWithRestartButton() {
-    // Oculta los botones de micro y teclado SOLO si es el mensaje de error
-    setTimeout(() => {
-      const micBtn = document.getElementById('micBtn');
-      const keyboardBtn = document.getElementById('keyboardBtn');
-      const info = document.getElementById('info');
-      if (micBtn) micBtn.style.display = 'none';
-      if (keyboardBtn) keyboardBtn.style.display = 'none';
-      if (info) info.style.display = 'none';
-    }, 50);
-    // Mensaje solo texto para voz
+    // NO ocultar los controles aquí, solo devolver el mensaje
     getErrorWithRestartButton.voice = 'Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.';
-    // Mensaje HTML para la vista
     return `Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.<br><button id="restartBtn" class="mt-3 px-4 py-2 bg-[#228b54] dark:bg-[#7be495] text-white dark:text-[#185d39] rounded-lg flex items-center gap-2 mx-auto" style="display:block;font-size:1rem;"><i class='fa-solid fa-rotate-right'></i> Reiniciar la conversación</button>`;
   }
 
@@ -607,6 +597,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // (como los mensajes se agregan dinámicamente)
   document.addEventListener('click', function(e) {
     if (e.target && e.target.id === 'restartBtn') {
+      // Al reiniciar, mostrar de nuevo los controles
+      const micBtn = document.getElementById('micBtn');
+      const keyboardBtn = document.getElementById('keyboardBtn');
+      const info = document.getElementById('info');
+      if (micBtn) micBtn.style.display = '';
+      if (keyboardBtn) keyboardBtn.style.display = '';
+      if (info) info.style.display = '';
       location.reload();
     }
   });
