@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
       recognizing = true;
       recognitionEnded = false;
       micBtn.classList.add('recording');
-      info.textContent = 'Escuchando... Pulsa de nuevo para parar.';
+      info.textContent = 'Escuchando... Pulsa para parar';
     };
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
