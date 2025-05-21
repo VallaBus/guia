@@ -590,8 +590,10 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
       const micBtn = document.getElementById('micBtn');
       const keyboardBtn = document.getElementById('keyboardBtn');
+      const info = document.getElementById('info');
       if (micBtn) micBtn.style.display = 'none';
       if (keyboardBtn) keyboardBtn.style.display = 'none';
+      if (info) info.style.display = 'none'; // Oculta también el mensaje "Pulsa para hablar"
     }, 50);
     // Mensaje solo texto para voz
     getErrorWithRestartButton.voice = 'Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.';
