@@ -374,6 +374,8 @@ document.addEventListener('DOMContentLoaded', function() {
       if (textInputForm.style.display === 'none' && info) info.style.display = '';
       const errorMsg = getErrorWithRestartButton();
       addMessage(errorMsg, 'bot', getErrorWithRestartButton.voice);
+      // Los controles ya se ocultan dentro de getErrorWithRestartButton SOLO para el error
+      return;
     }
   });
 
@@ -586,14 +588,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Utilidad para crear el mensaje de error con botón de reinicio
   function getErrorWithRestartButton() {
-    // Oculta los botones de micro y teclado
+    // Oculta los botones de micro y teclado SOLO si es el mensaje de error
     setTimeout(() => {
       const micBtn = document.getElementById('micBtn');
       const keyboardBtn = document.getElementById('keyboardBtn');
       const info = document.getElementById('info');
       if (micBtn) micBtn.style.display = 'none';
       if (keyboardBtn) keyboardBtn.style.display = 'none';
-      if (info) info.style.display = 'none'; // Oculta también el mensaje "Pulsa para hablar"
+      if (info) info.style.display = 'none';
     }, 50);
     // Mensaje solo texto para voz
     getErrorWithRestartButton.voice = 'Lo siento, en estos momentos no puedo ayudarte, prueba de nuevo en un rato.';
