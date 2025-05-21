@@ -21,32 +21,69 @@ const configureClient = async () => {
 window.onload = async () => {
   await configureClient();
 
+  // Espera a que Auth0 esté listo y detecta correctamente la sesión
+  let isAuthenticated = false;
+  try {
+    isAuthenticated = await auth0Client.isAuthenticated();
+  } catch (e) {
+    isAuthenticated = false;
+  }
+
+  // Procesa el callback de Auth0 si es necesario
+  const query = window.location.search;
+  if (query.includes("code=") && query.includes("state=")) {
+    try {
+      await auth0Client.handleRedirectCallback();
+    } catch (e) {}
+    // Vuelve a comprobar autenticación tras el callback
+    isAuthenticated = await auth0Client.isAuthenticated();
+    window.history.replaceState({}, document.title, "/");
+  }
+
+  // Oculta o muestra controles de la barra inferior según autenticación
+  const info = document.getElementById('info');
+  const textInputForm = document.getElementById('textInputForm');
+  const loader = document.getElementById('loader');
+  const stopBtn = document.getElementById('stopBtn');
+  const speakerBtn = document.getElementById('speakerBtn');
+  const micBtn = document.getElementById('micBtn');
+  const keyboardBtn = document.getElementById('keyboardBtn');
+  let loginMainBtn = document.getElementById('main-login-btn');
+  if (!isAuthenticated) {
+    // Oculta todos los controles de la barra inferior
+    if (info) info.style.display = 'none';
+    if (textInputForm) textInputForm.style.display = 'none';
+    if (loader) loader.style.display = 'none';
+    if (stopBtn) stopBtn.style.display = 'none';
+    if (speakerBtn) speakerBtn.style.display = 'none';
+    if (micBtn) micBtn.style.display = 'none';
+    if (keyboardBtn) keyboardBtn.style.display = 'none';
+    if (!loginMainBtn) {
+      loginMainBtn = document.createElement('button');
+      loginMainBtn.id = 'main-login-btn';
+      loginMainBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión';
+      loginMainBtn.className = 'login-main-btn';
+      loginMainBtn.onclick = login;
+      const bottomBar = document.querySelector('.fixed-bottom-bar');
+      if (bottomBar) bottomBar.appendChild(loginMainBtn);
+    } else {
+      loginMainBtn.style.display = 'block';
+    }
+  } else {
+    // Solo ocultar el botón de login, pero NO forzar display de los demás (deja que main.js controle)
+    if (loginMainBtn) loginMainBtn.style.display = 'none';
+  }
+
   // Asigna listeners a los botones de login y logout SOLO si existen
   const btnLogin = document.getElementById("btn-login");
   if (btnLogin) btnLogin.addEventListener("click", login);
   const btnLogout = document.getElementById("btn-logout");
   if (btnLogout) btnLogout.addEventListener("click", logout);
 
-  const isAuthenticated = await auth0Client.isAuthenticated();
-
-  // NEW - check for the code and state parameters
-  const query = window.location.search;
-  if (query.includes("code=") && query.includes("state=")) {
-
-    // Process the login state
-    await auth0Client.handleRedirectCallback();
-    
-    updateUI();
-
-    // Use replaceState to redirect the user away and remove the querystring parameters
-    window.history.replaceState({}, document.title, "/");
-  }
-
   // NEW - update the UI state
   updateUI();
 };
 
-// NEW
 const updateUI = async () => { 
   const isAuthenticated = await auth0Client.isAuthenticated();
 
