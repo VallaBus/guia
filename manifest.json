@@ -4,19 +4,19 @@
   "description": "Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#228b54",
-  "theme_color": "#228b54",
+  "background_color": "#434f48",
+  "theme_color": "#434f48",
   "dark_background_color": "#212d26",
   "dark_theme_color": "#212d26",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "img/sparkles.png",
+      "src": "img/guia-vallabus-logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "img/sparkles.png",
+      "src": "img/guia-vallabus-logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }
