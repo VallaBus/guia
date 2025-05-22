@@ -621,6 +621,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js');
   });
 }
+
 // Sidebar logic
 const menuBtn = document.getElementById('menuBtn');
 const sidebar = document.getElementById('sidebarMenu');
