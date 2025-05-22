@@ -487,17 +487,19 @@ document.addEventListener('DOMContentLoaded', function() {
             showTooltip(copyBtn, 'Solo disponible en HTTPS');
             return;
           }
-          navigator.clipboard.writeText(msgText).then(() => {
+          const msgTextWithFooter = msgText + '\n\nGenerado por Guía VallaBus\nhttps://guia.vallabus.com';
+          navigator.clipboard.writeText(msgTextWithFooter).then(() => {
             showTooltip(copyBtn, '¡Copiado!');
           });
         }
         function handleShare(e) {
           e.preventDefault();
           e.stopPropagation();
+          const msgTextWithFooter = msgText + '\n\nGenerado por Guía VallaBus\nhttps://guia.vallabus.com';
           if (navigator.share) {
-            navigator.share({ text: msgText });
+            navigator.share({ text: msgTextWithFooter });
           } else if (navigator.clipboard) {
-            navigator.clipboard.writeText(msgText).then(() => {
+            navigator.clipboard.writeText(msgTextWithFooter).then(() => {
               showTooltip(shareBtn, '¡Copiado para compartir!');
             });
           } else {
