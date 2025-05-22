@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let recognitionEnded = true;
   let utteranceActual = null;
   let speakLongTextCancelado = false;
+  let esperaLecturaPorVoz = false; // Flag para lectura automática tras tap micrófono
 
   // --- Detección estricta de soporte Speech API ---
   function isSpeechApiReallySupported() {
@@ -235,6 +236,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let idx = 0;
     speakLongTextCancelado = false;
     setSpeakingState(true);
+    // Selección simple: primera voz española disponible
+    function getBestSpanishVoice() {
+      if (!voices || !voices.length) return null;
+      const vocesEs = voices.filter(v => v.lang && v.lang.startsWith('es'));
+      if (vocesEs.length > 0) return vocesEs[0];
+      return null;
+    }
+    const vozElegida = getBestSpanishVoice();
     function speakNext() {
       if (speakLongTextCancelado || idx >= frases.length) {
         setSpeakingState(false);
@@ -246,8 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       utteranceActual = new SpeechSynthesisUtterance(frase);
       utteranceActual.lang = 'es-ES';
-      const vocesEs = voices.filter(voice => voice.lang.startsWith('es'));
-      if (vocesEs.length > 0) utteranceActual.voice = vocesEs[0];
+      if (vozElegida) utteranceActual.voice = vozElegida;
       utteranceActual.volume = 1;
       utteranceActual.rate = 1;
       utteranceActual.pitch = 1;
@@ -391,6 +399,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   micBtn.addEventListener('click', () => {
+    // Workaround Safari iOS: despertar SpeechSynthesis
+    if (/iP(ad|hone|od)/.test(navigator.userAgent)) {
+      try {
+        const dummy = new SpeechSynthesisUtterance('.');
+        dummy.volume = 0;
+        window.speechSynthesis.speak(dummy);
+      } catch(e) {}
+    }
     speakLongTextCancelado = true; // Igual que el botón detener
     window.speechSynthesis.cancel(); // Detener cualquier voz en curso
     if (recognizing) {
@@ -401,6 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       startRecognition();
     }
+    esperaLecturaPorVoz = true; // Activar flag para lectura automática
   });
 
   // --- FIN: Lógica de tema eliminada ---
@@ -529,6 +546,11 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addMessage = function(text, sender) {
     originalAddMessage(text, sender);
     updatePlaceholder();
+    // LECTURA AUTOMÁTICA TRAS TAP MIC (solo si altavoz activo y flag activado)
+    if (speechSupported && speakerActive && sender === 'assistant' && esperaLecturaPorVoz) {
+      esperaLecturaPorVoz = false;
+      speakLongText(text);
+    }
   };
   
   // Llamar al cargar
