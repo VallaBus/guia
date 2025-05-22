@@ -145,10 +145,13 @@ document.addEventListener('DOMContentLoaded', function() {
       // Enviar al webhook
       showThinkingPlaceholder();
       (async () => {
+        // Usamos window.getAccessToken() para obtener el token actualizado de Auth0 antes de cada petición.
+        // Si el usuario está autenticado y la sesión sigue activa, se añade el token a la cabecera Authorization.
+        // Si no, la petición se hace como usuario anónimo.
         let headers = { 'Content-Type': 'application/json' };
-        if (window.auth0Client && await window.auth0Client.isAuthenticated()) {
-          const token = await window.auth0Client.getTokenSilently();
-          headers['Authorization'] = `Bearer ${token}`;
+        if (window.getAccessToken) {
+          const token = await window.getAccessToken();
+          if (token) headers['Authorization'] = `Bearer ${token}`;
         }
         try {
           const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
@@ -329,11 +332,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('loader').style.display = 'flex';
     showThinkingPlaceholder();
     // Enviar al webhook: si logueado, Bearer; si no, solo Content-Type
+    // Usamos window.getAccessToken() para obtener el token actualizado de Auth0 antes de cada petición.
+    // Si el usuario está autenticado y la sesión sigue activa, se añade el token a la cabecera Authorization.
+    // Si no, la petición se hace como usuario anónimo.
     let headers = { 'Content-Type': 'application/json' };
     let body = JSON.stringify({ texto: value, usuario_id: usuarioId });
-    if (window.auth0Client && await window.auth0Client.isAuthenticated()) {
-      const token = await window.auth0Client.getTokenSilently();
-      headers['Authorization'] = `Bearer ${token}`;
+    if (window.getAccessToken) {
+      const token = await window.getAccessToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
     }
     try {
       const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {

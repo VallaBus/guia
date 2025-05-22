@@ -11,7 +11,9 @@ const configureClient = async () => {
     authorizationParams: {
       audience: config.audience,
       redirect_uri: window.location.origin
-    }
+    },
+    useRefreshTokens: true,
+    cacheLocation: 'localstorage'
   });
 
   // Expón auth0Client en window para acceso global
@@ -20,6 +22,13 @@ const configureClient = async () => {
 
 window.onload = async () => {
   await configureClient();
+
+  // Refresca el token silenciosamente al cargar para mantener sesión si hay SSO
+  // Si el usuario tiene sesión SSO activa en Auth0, esto renovará el token y lo mantendrá logeado aunque hayan pasado días.
+  // Si no tiene sesión SSO, simplemente no hará nada y el usuario seguirá como anónimo.
+  try {
+    await getAccessToken(); // Esto renovará el token si la sesión SSO sigue activa
+  } catch (e) {}
 
   // Espera a que Auth0 esté listo y detecta correctamente la sesión
   let isAuthenticated = false;
@@ -214,6 +223,34 @@ const updateUI = async () => {
     userInfoDiv.textContent = "";
   }
 };
+
+// Helper para obtener el access token actualizado antes de cada petición
+// Usa getTokenSilently() para renovar el token si es posible, pero NO fuerza login automático si falla.
+// Así, solo se fuerza login cuando el usuario lo solicita explícitamente.
+const getAccessToken = async () => {
+  try {
+    return await auth0Client.getTokenSilently();
+  } catch (e) {
+    // Si falla, probablemente la sesión expiró o no hay login, pero NO forzar login automáticamente
+    return null;
+  }
+};
+
+// Expón getAccessToken en window para acceso global desde main.js
+window.getAccessToken = getAccessToken;
+
+// Ejemplo de uso para peticiones autenticadas:
+// async function fetchConToken(url, options = {}) {
+//   const token = await getAccessToken();
+//   if (!token) throw new Error('No se pudo obtener el token');
+//   return fetch(url, {
+//     ...options,
+//     headers: {
+//       ...(options.headers || {}),
+//       Authorization: `Bearer ${token}`
+//     }
+//   });
+// }
 
 const login = async () => {
   await auth0Client.loginWithRedirect({
