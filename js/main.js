@@ -152,6 +152,35 @@ function mainVallaBus() {
         }
       }, 100);
     }
+    // --- Utilidad para construir headers con token si existe ---
+    async function construirHeaders() {
+      let headers = { 'Content-Type': 'application/json' };
+      if (window.getAccessToken) {
+        try {
+          const token = await window.getAccessToken();
+          if (token && typeof token === 'string' && token.split('.').length === 3) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+        } catch (e) {}
+      }
+      return headers;
+    }
+    // --- Utilidad para añadir ubicación si está disponible ---
+    function añadirUbicacionSiDisponible(bodyObj) {
+      const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
+      if (ubic && typeof ubic.latitud === 'number' && typeof ubic.longitud === 'number') {
+        bodyObj.latitud = ubic.latitud;
+        bodyObj.longitud = ubic.longitud;
+      }
+    }
+    // --- Utilidad para mostrar error de bot ---
+    function mostrarErrorBot(info, textInputForm) {
+      removeThinkingPlaceholder();
+      document.getElementById('loader').style.display = 'none';
+      if (textInputForm && textInputForm.style.display === 'none' && info) info.style.display = '';
+      const errorMsg = getErrorWithRestartButton();
+      addMessage(errorMsg, 'bot', getErrorWithRestartButton.voice);
+    }
     // Reconocimiento de voz
     function startRecognition() {
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -178,50 +207,13 @@ function mainVallaBus() {
           recognition.stop(); // Detener reconocimiento inmediatamente
           // Enviar al webhook
           showThinkingPlaceholder();
-          // Usamos window.getAccessToken() para obtener el token actualizado de Auth0 antes de cada petición.
-          // Si el usuario está autenticado y la sesión sigue activa, se añade el token a la cabecera Authorization.
-          // Si no, la petición se hace como usuario anónimo.
-          let headers = { 'Content-Type': 'application/json' };
+          // --- Nuevo flujo DRY ---
           let bodyObj = { texto: transcript, usuario_id: usuarioId };
-          // --- Esperar hasta 3s por la ubicación si no está ---
-          function getUbicacionConEspera(maxWaitMs = 3000, intervalMs = 200) {
-            return new Promise(resolve => {
-              const start = Date.now();
-              function check() {
-                const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
-                if (ubic && typeof ubic.latitud === 'number' && typeof ubic.longitud === 'number') {
-                  resolve(ubic);
-                } else if (Date.now() - start >= maxWaitMs) {
-                  resolve(null);
-                } else {
-                  setTimeout(check, intervalMs);
-                }
-              }
-              check();
-            });
-          }
+          añadirUbicacionSiDisponible(bodyObj);
+          let body = JSON.stringify(bodyObj);
+          let headers = null;
           (async () => {
-            const ubic = await getUbicacionConEspera();
-            if (ubic) {
-              bodyObj.latitud = ubic.latitud;
-              bodyObj.longitud = ubic.longitud;
-            }
-            let body = JSON.stringify(bodyObj);
-            let token = null;
-            let isAuthenticated = false;
-            if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-              try {
-                isAuthenticated = await window.auth0Client.isAuthenticated();
-              } catch (e) {}
-            }
-            if (window.getAccessToken) {
-              try {
-                token = await window.getAccessToken();
-              } catch (e) {}
-              if (token && typeof token === 'string' && token.split('.').length === 3) {
-                headers['Authorization'] = `Bearer ${token}`;
-              }
-            }
+            headers = await construirHeaders();
             try {
               const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
                 method: 'POST',
@@ -229,39 +221,9 @@ function mainVallaBus() {
                 body
               });
               const data = await res.json();
-              removeThinkingPlaceholder();
-              document.getElementById('loader').style.display = 'none';
-              let respuesta = data.output || getErrorWithRestartButton();
-              // Reemplazar todas las URLs por un marcador especial para la voz
-              const urlRegex = /(https?:\/\/[^\s]+)/g;
-              // Eliminar emojis para la voz (sin eliminar números)
-              // Regex seguro para solo emojis (sin error de rango)
-              const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
-              let respuestaParaVoz;
-              if (respuesta === getErrorWithRestartButton()) {
-                respuestaParaVoz = getErrorWithRestartButton.voice;
-              } else {
-                respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
-              }
-              // Para la vista, mostrar enlaces clicables con color verde acorde al theme
-              const respuestaConEnlaces = respuesta.replace(urlRegex, url => {
-                try {
-                  const urlObj = new URL(url);
-                  return `<a href="${url}" target="_blank" rel="noopener" class="text-[#228b54] dark:text-[#7be495] underline">${urlObj.hostname}</a>`;
-                } catch {
-                  return url;
-                }
-              }).replace(/\n/g, '<br>');
-              addMessage(respuestaConEnlaces, 'bot', respuesta);
-              respuestaPendiente = respuestaParaVoz;
-              if (recognitionEnded && respuestaPendiente) {
-                speakLongText(respuestaPendiente);
-                respuestaPendiente = null;
-              }
+              handleBotResponse(data, {infoRef: info, textInputFormRef: textInputForm});
             } catch (err) {
-              removeThinkingPlaceholder();
-              document.getElementById('loader').style.display = 'none';
-              info.textContent = 'Error al procesar la consulta.';
+              mostrarErrorBot(info, textInputForm);
             }
           })();
         })();
@@ -408,70 +370,21 @@ function mainVallaBus() {
       if (info) info.style.display = 'none';
       document.getElementById('loader').style.display = 'flex';
       showThinkingPlaceholder();
-      // Enviar al webhook: si logueado, Bearer; si no, solo Content-Type
-      let headers = { 'Content-Type': 'application/json' };
+      // --- Nuevo flujo DRY ---
       let bodyObj = { texto: value, usuario_id: usuarioId };
-      const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
-      if (ubic && typeof ubic.latitud === 'number' && typeof ubic.longitud === 'number') {
-        bodyObj.latitud = ubic.latitud;
-        bodyObj.longitud = ubic.longitud;
-      }
+      añadirUbicacionSiDisponible(bodyObj);
       let body = JSON.stringify(bodyObj);
-      let token = null;
-      let isAuthenticated = false;
-      if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-        try {
-          isAuthenticated = await window.auth0Client.isAuthenticated();
-        } catch (e) {}
-      }
-      if (window.getAccessToken) {
-        try {
-          token = await window.getAccessToken();
-        } catch (e) {}
-        if (token && typeof token === 'string' && token.split('.').length === 3) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-      }
+      let headers = await construirHeaders();
       try {
         const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
           method: 'POST',
-          headers, // <-- Pasa el objeto plano, NO uses new Headers()
+          headers,
           body
         });
         const data = await res.json();
-        removeThinkingPlaceholder();
-        document.getElementById('loader').style.display = 'none';
-        if (textInputForm.style.display === 'none' && info) info.style.display = '';
-        let respuesta = data.output || getErrorWithRestartButton();
-        const urlRegex = /(https?:\/\/[\S]+)/g;
-        const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
-        let respuestaParaVoz;
-        if (respuesta === getErrorWithRestartButton()) {
-          respuestaParaVoz = getErrorWithRestartButton.voice;
-        } else {
-          respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
-        }
-        const respuestaConEnlaces = respuesta.replace(urlRegex, url => {
-          try {
-            const urlObj = new URL(url);
-            return `<a href="${url}" target="_blank" rel="noopener" class="text-[#228b54] dark:text-[#7be495] underline">${urlObj.hostname}</a>`;
-          } catch {
-            return url;
-          }
-        }).replace(/\n/g, '<br>');
-        addMessage(respuestaConEnlaces, 'bot', respuesta);
-        respuestaPendiente = respuestaParaVoz;
-        if (recognitionEnded && respuestaPendiente) {
-          speakLongText(respuestaPendiente);
-          respuestaPendiente = null;
-        }
+        handleBotResponse(data, {infoRef: info, textInputFormRef: textInputForm});
       } catch {
-        removeThinkingPlaceholder();
-        document.getElementById('loader').style.display = 'none';
-        if (textInputForm.style.display === 'none' && info) info.style.display = '';
-        const errorMsg = getErrorWithRestartButton();
-        addMessage(errorMsg, 'bot', getErrorWithRestartButton.voice);
-        // Los controles ya se ocultan dentro de getErrorWithRestartButton SOLO para el error
+        mostrarErrorBot(info, textInputForm);
         return;
       }
     });
@@ -857,6 +770,63 @@ function mainVallaBus() {
         location.reload();
       }
     });
+
+    // --- Utilidad para procesar enlaces y limpiar saltos de línea ---
+    function procesarRespuestaConEnlaces(respuesta, {paraVoz = false} = {}) {
+      const urlRegex = /(https?:\/\/[\S]+)/g;
+      const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
+      // Limpia saltos de línea antes y después de enlaces a rutas.vallabus.com
+      let texto = respuesta.replace(urlRegex, (url) => {
+        try {
+          const urlObj = new URL(url);
+          if (urlObj.hostname === 'rutas.vallabus.com') {
+            // Elimina \n justo antes y después del enlace
+            texto = texto.replace(new RegExp(`\\n*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n*`, 'g'), url);
+          }
+        } catch {}
+        return url;
+      });
+      if (paraVoz) {
+        // Elimina emojis y reemplaza URLs por marcador
+        return texto.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
+      } else {
+        // Reemplaza enlaces por HTML, y \n por <br>
+        return texto.replace(urlRegex, url => {
+          try {
+            const urlObj = new URL(url);
+            if (urlObj.hostname === 'rutas.vallabus.com') {
+              return `<a href="${url}" target="_blank" rel="noopener" class="block w-full text-center text-white font-medium bg-[#698374] dark:bg-[#355347] py-2 px-3 my-2 rounded-lg hover:bg-[#56635a] dark:hover:bg-[#23382b] transition-colors"><i class="fa-solid fa-route mr-2"></i>Ver ruta y alternativas</a>`;
+            } else {
+              return `<a href="${url}" target="_blank" rel="noopener" class="text-[#228b54] dark:text-[#7be495] underline">${urlObj.hostname}</a>`;
+            }
+          } catch {
+            return url;
+          }
+        }).replace(/\n/g, '<br>');
+      }
+    }
+
+    // --- Centraliza el procesamiento de la respuesta del bot ---
+    function handleBotResponse(data, {originalPregunta = null, infoRef = null, textInputFormRef = null} = {}) {
+      removeThinkingPlaceholder();
+      document.getElementById('loader').style.display = 'none';
+      if (textInputFormRef && textInputFormRef.style.display === 'none' && infoRef) infoRef.style.display = '';
+      let respuesta = data.output || getErrorWithRestartButton();
+      let respuestaParaVoz, respuestaConEnlaces;
+      if (respuesta === getErrorWithRestartButton()) {
+        respuestaParaVoz = getErrorWithRestartButton.voice;
+        respuestaConEnlaces = respuesta;
+      } else {
+        respuestaParaVoz = procesarRespuestaConEnlaces(respuesta, {paraVoz: true});
+        respuestaConEnlaces = procesarRespuestaConEnlaces(respuesta);
+      }
+      addMessage(respuestaConEnlaces, 'bot', respuesta);
+      respuestaPendiente = respuestaParaVoz;
+      if (recognitionEnded && respuestaPendiente) {
+        speakLongText(respuestaPendiente);
+        respuestaPendiente = null;
+      }
+    }
   });
 
   // Registrar el service worker para PWA
