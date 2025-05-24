@@ -123,51 +123,32 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   window.speechSynthesis.onvoiceschanged = loadVoices;
   loadVoices();
-  // Reconocimiento de voz
-  async function askLocationPermissionIfNeeded() {
+  // --- Solicitar ubicación al cargar la app ---
+  (function solicitarUbicacionAlCargar() {
     if (!navigator.geolocation) return;
     try {
-      const permission = await (navigator.permissions ? navigator.permissions.query({ name: 'geolocation' }) : Promise.resolve({ state: 'prompt' }));
-      if (permission.state === 'granted') {
-        // Siempre refrescar la ubicación si ya está concedido
-        return new Promise(resolve => {
-          navigator.geolocation.getCurrentPosition(pos => {
-            userLocation = {
-              latitud: pos.coords.latitude,
-              longitud: pos.coords.longitude
-            };
-            resolve();
-          }, () => resolve());
+      if (navigator.permissions) {
+        navigator.permissions.query({ name: 'geolocation' }).then(permission => {
+          if (permission.state === 'granted' || permission.state === 'prompt') {
+            navigator.geolocation.getCurrentPosition(pos => {
+              userLocation = {
+                latitud: pos.coords.latitude,
+                longitud: pos.coords.longitude
+              };
+            });
+          }
         });
-      } else if (permission.state === 'prompt' && !locationPermissionAsked) {
-        locationPermissionAsked = true;
-        return new Promise(resolve => {
-          navigator.geolocation.getCurrentPosition(pos => {
-            userLocation = {
-              latitud: pos.coords.latitude,
-              longitud: pos.coords.longitude
-            };
-            resolve();
-          }, () => resolve());
+      } else {
+        navigator.geolocation.getCurrentPosition(pos => {
+          userLocation = {
+            latitud: pos.coords.latitude,
+            longitud: pos.coords.longitude
+          };
         });
       }
-      // Si denegado, no hacer nada
-    } catch {
-      // fallback: intentar pedir solo si no se ha preguntado
-      if (!locationPermissionAsked) {
-        locationPermissionAsked = true;
-        return new Promise(resolve => {
-          navigator.geolocation.getCurrentPosition(pos => {
-            userLocation = {
-              latitud: pos.coords.latitude,
-              longitud: pos.coords.longitude
-            };
-            resolve();
-          }, () => resolve());
-        });
-      }
-    }
-  }
+    } catch {}
+  })();
+  // Reconocimiento de voz
   function startRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       info.textContent = 'Tu navegador no soporta reconocimiento de voz.';
@@ -188,8 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
       info.textContent = '';
       document.getElementById('loader').style.display = 'flex';
       // Mostrar pregunta detectada
-      (async () => {
-        await askLocationPermissionIfNeeded();
+      (function() {
         addMessage(transcript, 'user');
         recognition.stop(); // Detener reconocimiento inmediatamente
         // Enviar al webhook
@@ -203,47 +183,49 @@ document.addEventListener('DOMContentLoaded', function() {
           bodyObj.latitud = userLocation.latitud;
           bodyObj.longitud = userLocation.longitud;
         }
-        try {
-          const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(bodyObj)
-          });
-          const data = await res.json();
-          removeThinkingPlaceholder();
-          document.getElementById('loader').style.display = 'none';
-          let respuesta = data.output || getErrorWithRestartButton();
-          // Reemplazar todas las URLs por un marcador especial para la voz
-          const urlRegex = /(https?:\/\/[^\s]+)/g;
-          // Eliminar emojis para la voz (sin eliminar números)
-          // Regex seguro para solo emojis (sin error de rango)
-          const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
-          let respuestaParaVoz;
-          if (respuesta === getErrorWithRestartButton()) {
-            respuestaParaVoz = getErrorWithRestartButton.voice;
-          } else {
-            respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
-          }
-          // Para la vista, mostrar enlaces clicables con color verde acorde al theme
-          const respuestaConEnlaces = respuesta.replace(urlRegex, url => {
-            try {
-              const urlObj = new URL(url);
-              return `<a href="${url}" target="_blank" rel="noopener" class="text-[#228b54] dark:text-[#7be495] underline">${urlObj.hostname}</a>`;
-            } catch {
-              return url;
+        (async () => {
+          try {
+            const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(bodyObj)
+            });
+            const data = await res.json();
+            removeThinkingPlaceholder();
+            document.getElementById('loader').style.display = 'none';
+            let respuesta = data.output || getErrorWithRestartButton();
+            // Reemplazar todas las URLs por un marcador especial para la voz
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            // Eliminar emojis para la voz (sin eliminar números)
+            // Regex seguro para solo emojis (sin error de rango)
+            const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
+            let respuestaParaVoz;
+            if (respuesta === getErrorWithRestartButton()) {
+              respuestaParaVoz = getErrorWithRestartButton.voice;
+            } else {
+              respuestaParaVoz = respuesta.replace(emojiRegex, '').replace(urlRegex, '___ENLACE___');
             }
-          }).replace(/\n/g, '<br>');
-          addMessage(respuestaConEnlaces, 'bot', respuesta);
-          respuestaPendiente = respuestaParaVoz;
-          if (recognitionEnded && respuestaPendiente) {
-            speakLongText(respuestaPendiente);
-            respuestaPendiente = null;
+            // Para la vista, mostrar enlaces clicables con color verde acorde al theme
+            const respuestaConEnlaces = respuesta.replace(urlRegex, url => {
+              try {
+                const urlObj = new URL(url);
+                return `<a href="${url}" target="_blank" rel="noopener" class="text-[#228b54] dark:text-[#7be495] underline">${urlObj.hostname}</a>`;
+              } catch {
+                return url;
+              }
+            }).replace(/\n/g, '<br>');
+            addMessage(respuestaConEnlaces, 'bot', respuesta);
+            respuestaPendiente = respuestaParaVoz;
+            if (recognitionEnded && respuestaPendiente) {
+              speakLongText(respuestaPendiente);
+              respuestaPendiente = null;
+            }
+          } catch (err) {
+            removeThinkingPlaceholder();
+            document.getElementById('loader').style.display = 'none';
+            info.textContent = 'Error al procesar la consulta.';
           }
-        } catch (err) {
-          removeThinkingPlaceholder();
-          document.getElementById('loader').style.display = 'none';
-          info.textContent = 'Error al procesar la consulta.';
-        }
+        })();
       })();
     };
     recognition.onerror = (event) => {
@@ -378,7 +360,6 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
     const value = textInput.value.trim();
     if (!value) return;
-    await askLocationPermissionIfNeeded();
     addMessage(value, 'user');
     textInput.value = '';
     if (speechSupported) {
