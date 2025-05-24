@@ -555,20 +555,15 @@ document.addEventListener('DOMContentLoaded', function() {
             })
           });
         });
-        // Manita abajo
         if (thumbsDownBtn) thumbsDownBtn.addEventListener('click', function(e) {
           e.preventDefault();
           e.stopPropagation();
-          thumbsUpBtn.disabled = true;
-          thumbsDownBtn.disabled = true;
-          thumbsDownBtn.style.opacity = '1';
-          thumbsDownBtn.querySelector('i').classList.remove('fa-regular');
-          thumbsDownBtn.querySelector('i').classList.add('fa-solid');
+          // Solo marcar como "seleccionado" si realmente se envía feedback
           // Mostrar modal feedback negativo
-          showNegativeFeedbackModal({respuesta: msgText, pregunta: userQuestion, thumbsDownBtn});
+          showNegativeFeedbackModal({respuesta: msgText, pregunta: userQuestion, thumbsDownBtn, thumbsUpBtn});
         });
         // Modal feedback negativo
-        function showNegativeFeedbackModal({respuesta, pregunta, thumbsDownBtn}) {
+        function showNegativeFeedbackModal({respuesta, pregunta, thumbsDownBtn, thumbsUpBtn}) {
           // Si ya existe, no crear otro
           if (document.getElementById('feedbackModal')) return;
           const modal = document.createElement('div');
@@ -585,14 +580,15 @@ document.addEventListener('DOMContentLoaded', function() {
           modal.style.justifyContent = 'center';
           // Detectar modo dark
           const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const bgColor = isDark ? '#23382b' : '#222c24';
-          const textColor = isDark ? '#b7e4c7' : '#fff';
+          const bgColor = isDark ? '#23382b' : '#fff';
+          const textColor = isDark ? '#b7e4c7' : '#222c24';
           const inputBg = isDark ? '#355347' : '#fff';
           const inputColor = isDark ? '#b7e4c7' : '#222c24';
+          const inputBorder = isDark ? '1px solid #355347' : '1px solid #d1f2e0';
           modal.innerHTML = `
-            <form id="feedbackForm" style="background:${bgColor};color:${textColor};padding:28px 22px 18px 22px;border-radius:18px;min-width:320px;max-width:90vw;box-shadow:0 4px 32px #0003;display:flex;flex-direction:column;gap:18px;">
-              <label style="font-size:1.1em;font-weight:600;">¿Qué problema hubo con la respuesta? ¿Cómo se podría mejorar?</label>
-              <textarea name="comentario" rows="3" style="border-radius:8px;padding:8px 10px;font-size:1em;resize:vertical;border:none;outline:none;background:${inputBg};color:${inputColor};"></textarea>
+            <form id="feedbackForm" style="background:${bgColor};color:${textColor};padding:28px 22px 18px 22px;border-radius:18px;min-width:320px;max-width:90vw;box-shadow:0 4px 32px #0003;display:flex;flex-direction:column;gap:8px;">
+              <label style="font-size:1.1em;font-weight:600;">Proporcionar información</label>
+              <textarea name="comentario" rows="3" placeholder="¿Qué problema hubo con la respuesta? ¿Cómo se podría mejorar?" style="border-radius:8px;padding:8px 10px;font-size:1em;resize:vertical;border:${inputBorder};outline:none;background:${inputBg};color:${inputColor};transition:border 0.2s;"></textarea>
               <div style="display:flex;flex-direction:column;gap:8px;margin-top:2px;">
                 <label style="display:flex;align-items:center;gap:8px;font-size:1em;"><input type="checkbox" name="motivos" value="dañino" style="accent-color:#228b54;"> Esto es dañino/peligroso</label>
                 <label style="display:flex;align-items:center;gap:8px;font-size:1em;"><input type="checkbox" name="motivos" value="no_es_verdad" style="accent-color:#228b54;"> Esto no es verdad</label>
@@ -606,7 +602,15 @@ document.addEventListener('DOMContentLoaded', function() {
           `;
           document.body.appendChild(modal);
           // Cancelar
-          document.getElementById('cancelFeedbackBtn').onclick = () => modal.remove();
+          document.getElementById('cancelFeedbackBtn').onclick = () => {
+            modal.remove();
+            // Restaurar estado de los botones
+            thumbsDownBtn.disabled = false;
+            thumbsUpBtn.disabled = false;
+            thumbsDownBtn.style.opacity = '0.55';
+            thumbsDownBtn.querySelector('i').classList.remove('fa-solid');
+            thumbsDownBtn.querySelector('i').classList.add('fa-regular');
+          };
           // Enviar
           document.getElementById('feedbackForm').onsubmit = async function(ev) {
             ev.preventDefault();
@@ -631,6 +635,11 @@ document.addEventListener('DOMContentLoaded', function() {
               })
             });
             modal.remove();
+            thumbsDownBtn.disabled = true;
+            thumbsUpBtn.disabled = true;
+            thumbsDownBtn.style.opacity = '1';
+            thumbsDownBtn.querySelector('i').classList.remove('fa-regular');
+            thumbsDownBtn.querySelector('i').classList.add('fa-solid');
             showTooltip(thumbsDownBtn, '¡Gracias por tu feedback!');
           };
         }
