@@ -11,6 +11,12 @@ function solicitarUbicacionSiLogeado() {
     if (!isAuthenticated) return;
     if (ubicacionYaPedida) return; // Solo una vez por sesión
     ubicacionYaPedida = true;
+    // Opciones para obtener la mejor ubicación posible en móvil
+    const geoOptions = {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0
+    };
     if (navigator.permissions) {
       navigator.permissions.query({ name: 'geolocation' }).then(permission => {
         if (permission.state === 'granted' || permission.state === 'prompt') {
@@ -19,7 +25,7 @@ function solicitarUbicacionSiLogeado() {
               latitud: pos.coords.latitude,
               longitud: pos.coords.longitude
             };
-          });
+          }, undefined, geoOptions);
         }
       });
     } else {
@@ -28,7 +34,7 @@ function solicitarUbicacionSiLogeado() {
           latitud: pos.coords.latitude,
           longitud: pos.coords.longitude
         };
-      });
+      }, undefined, geoOptions);
     }
   });
 }
@@ -39,6 +45,7 @@ function iniciarWatcherUbicacion() {
     if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
       window.auth0Client.isAuthenticated().then(isAuthenticated => {
         if (isAuthenticated && !ubicacionYaPedida) {
+          // Pedir ubicación lo antes posible tras login
           solicitarUbicacionSiLogeado();
         }
         if (!isAuthenticated) {

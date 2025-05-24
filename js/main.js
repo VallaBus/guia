@@ -1,17 +1,14 @@
 // Esperar a que window.getAccessToken esté disponible antes de ejecutar el resto de main.js
 (function waitForAuth0Ready() {
   if (window.getAccessToken && typeof window.getAccessToken === 'function') {
-    console.log('[main.js] Auth0 y getAccessToken disponibles, arrancando mainVallaBus');
     mainVallaBus();
   } else {
-    console.log('[main.js] Esperando a que getAccessToken esté disponible...');
     setTimeout(waitForAuth0Ready, 50);
   }
 })();
 
 function mainVallaBus() {
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('[main.js] DOMContentLoaded, mainVallaBus ejecutándose');
     // --- Variables y elementos principales ---
     const micBtn = document.getElementById('micBtn');
     const micIcon = document.getElementById('micIcon');
@@ -139,23 +136,18 @@ function mainVallaBus() {
     // --- Solicitar ubicación al cargar la app SOLO si está logeado ---
     // Toda la lógica de ubicación se gestiona en js/ubicacion.js
     function waitForAuth0ClientAndStartUbicacion_LOG() {
-      console.log('[main.js] Comprobando si auth0Client está listo para watcher ubicación:', !!window.auth0Client, typeof window.auth0Client?.isAuthenticated);
       if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-        console.log('[main.js] auth0Client listo, iniciando watcher ubicación');
         window.ubicacion.iniciarWatcherUbicacion();
       } else {
         setTimeout(waitForAuth0ClientAndStartUbicacion_LOG, 50);
       }
     }
     if (window.ubicacion && typeof window.ubicacion.iniciarWatcherUbicacion === 'function') {
-      console.log('[main.js] ubicacion.iniciarWatcherUbicacion existe, esperando auth0Client...');
       waitForAuth0ClientAndStartUbicacion_LOG();
     } else {
-      console.log('[main.js] ubicacion.iniciarWatcherUbicacion NO existe aún, esperando...');
       const checkUbicacion = setInterval(function() {
         if (window.ubicacion && typeof window.ubicacion.iniciarWatcherUbicacion === 'function') {
           clearInterval(checkUbicacion);
-          console.log('[main.js] ubicacion.iniciarWatcherUbicacion ya existe, esperando auth0Client...');
           waitForAuth0ClientAndStartUbicacion_LOG();
         }
       }, 100);
@@ -191,44 +183,46 @@ function mainVallaBus() {
           // Si no, la petición se hace como usuario anónimo.
           let headers = { 'Content-Type': 'application/json' };
           let bodyObj = { texto: transcript, usuario_id: usuarioId };
-          const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
-          if (ubic) {
-            bodyObj.latitud = ubic.latitud;
-            bodyObj.longitud = ubic.longitud;
+          // --- Esperar hasta 3s por la ubicación si no está ---
+          function getUbicacionConEspera(maxWaitMs = 3000, intervalMs = 200) {
+            return new Promise(resolve => {
+              const start = Date.now();
+              function check() {
+                const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
+                if (ubic && typeof ubic.latitud === 'number' && typeof ubic.longitud === 'number') {
+                  resolve(ubic);
+                } else if (Date.now() - start >= maxWaitMs) {
+                  resolve(null);
+                } else {
+                  setTimeout(check, intervalMs);
+                }
+              }
+              check();
+            });
           }
-          let body = JSON.stringify(bodyObj);
-          let token = null;
-          let isAuthenticated = false;
           (async () => {
+            const ubic = await getUbicacionConEspera();
+            if (ubic) {
+              bodyObj.latitud = ubic.latitud;
+              bodyObj.longitud = ubic.longitud;
+            }
+            let body = JSON.stringify(bodyObj);
+            let token = null;
+            let isAuthenticated = false;
             if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
               try {
                 isAuthenticated = await window.auth0Client.isAuthenticated();
-                console.log('[main.js][mic] isAuthenticated:', isAuthenticated);
-              } catch (e) {
-                console.warn('[main.js][mic] Error comprobando autenticación:', e);
-              }
-            } else {
-              console.warn('[main.js][mic] auth0Client o isAuthenticated no disponible');
+              } catch (e) {}
             }
             if (window.getAccessToken) {
               try {
                 token = await window.getAccessToken();
-                console.log('[main.js][mic] Token obtenido:', token, 'typeof:', typeof token, 'split:', token && token.split('.'));
-              } catch (e) {
-                console.warn('[main.js][mic] No se pudo obtener el token de acceso:', e);
-              }
+              } catch (e) {}
               if (token && typeof token === 'string' && token.split('.').length === 3) {
                 headers['Authorization'] = `Bearer ${token}`;
-                console.log('[main.js][mic] Header Authorization añadido:', headers['Authorization']);
-              } else {
-                console.warn('[main.js][mic] Token no válido o no obtenido:', token, 'isAuthenticated:', isAuthenticated);
               }
-            } else {
-              console.warn('[main.js][mic] window.getAccessToken no está disponible');
             }
-            console.log('[main.js][mic] Headers finales para fetch:', headers);
             try {
-              console.log('[main.js][mic] Headers que van a fetch:', headers);
               const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
                 method: 'POST',
                 headers,
@@ -401,7 +395,6 @@ function mainVallaBus() {
 
     // Enviar consulta por texto
     textInputForm.addEventListener('submit', async function(e) {
-      console.log('[main.js] Submit de formulario de texto');
       e.preventDefault();
       const value = textInput.value.trim();
       if (!value) return;
@@ -419,7 +412,6 @@ function mainVallaBus() {
       let headers = { 'Content-Type': 'application/json' };
       let bodyObj = { texto: value, usuario_id: usuarioId };
       const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
-      console.log('[main.js] Ubicación obtenida para envío:', ubic);
       if (ubic && typeof ubic.latitud === 'number' && typeof ubic.longitud === 'number') {
         bodyObj.latitud = ubic.latitud;
         bodyObj.longitud = ubic.longitud;
@@ -430,38 +422,22 @@ function mainVallaBus() {
       if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
         try {
           isAuthenticated = await window.auth0Client.isAuthenticated();
-          console.log('[main.js] isAuthenticated:', isAuthenticated);
-        } catch (e) {
-          console.warn('[main.js] Error comprobando autenticación:', e);
-        }
-      } else {
-        console.warn('[main.js] auth0Client o isAuthenticated no disponible');
+        } catch (e) {}
       }
       if (window.getAccessToken) {
         try {
           token = await window.getAccessToken();
-          console.log('[main.js] Token obtenido:', token, 'typeof:', typeof token, 'split:', token && token.split('.'));
-        } catch (e) {
-          console.warn('[main.js] No se pudo obtener el token de acceso:', e);
-        }
+        } catch (e) {}
         if (token && typeof token === 'string' && token.split('.').length === 3) {
           headers['Authorization'] = `Bearer ${token}`;
-          console.log('[main.js] Header Authorization añadido:', headers['Authorization']);
-        } else {
-          console.warn('[main.js] Token no válido o no obtenido:', token, 'isAuthenticated:', isAuthenticated);
         }
-      } else {
-        console.warn('[main.js] window.getAccessToken no está disponible');
       }
-      console.log('[main.js] Headers finales para fetch:', headers);
       try {
-        console.log('[main.js] Headers que van a fetch:', headers);
         const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
           method: 'POST',
           headers, // <-- Pasa el objeto plano, NO uses new Headers()
           body
         });
-        console.log('[main.js] fetch ejecutado, response:', res);
         const data = await res.json();
         removeThinkingPlaceholder();
         document.getElementById('loader').style.display = 'none';
