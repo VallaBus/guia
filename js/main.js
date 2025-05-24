@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
   let speakLongTextCancelado = false;
   let esperaLecturaPorVoz = false; // Flag para lectura automática tras tap micrófono
   let lastUserQuestion = null;
-  let userLocation = null;
   let locationPermissionAsked = false;
+  let wasAuthenticated = false; // Nuevo flag para detectar transición de login
 
   // --- Detección estricta de soporte Speech API ---
   function isSpeechApiReallySupported() {
@@ -123,31 +123,20 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   window.speechSynthesis.onvoiceschanged = loadVoices;
   loadVoices();
-  // --- Solicitar ubicación al cargar la app ---
-  (function solicitarUbicacionAlCargar() {
-    if (!navigator.geolocation) return;
-    try {
-      if (navigator.permissions) {
-        navigator.permissions.query({ name: 'geolocation' }).then(permission => {
-          if (permission.state === 'granted' || permission.state === 'prompt') {
-            navigator.geolocation.getCurrentPosition(pos => {
-              userLocation = {
-                latitud: pos.coords.latitude,
-                longitud: pos.coords.longitude
-              };
-            });
-          }
-        });
-      } else {
-        navigator.geolocation.getCurrentPosition(pos => {
-          userLocation = {
-            latitud: pos.coords.latitude,
-            longitud: pos.coords.longitude
-          };
-        });
+  // --- Solicitar ubicación al cargar la app SOLO si está logeado ---
+  // Toda la lógica de ubicación se mueve a js/ubicacion.js
+  // Inicializar el watcher de ubicación al cargar
+  if (window.ubicacion && typeof window.ubicacion.iniciarWatcherUbicacion === 'function') {
+    window.ubicacion.iniciarWatcherUbicacion();
+  } else {
+    // Si aún no está cargado, esperar a que lo esté
+    const checkUbicacion = setInterval(function() {
+      if (window.ubicacion && typeof window.ubicacion.iniciarWatcherUbicacion === 'function') {
+        clearInterval(checkUbicacion);
+        window.ubicacion.iniciarWatcherUbicacion();
       }
-    } catch {}
-  })();
+    }, 100);
+  }
   // Reconocimiento de voz
   function startRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -179,9 +168,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Si no, la petición se hace como usuario anónimo.
         let headers = { 'Content-Type': 'application/json' };
         let bodyObj = { texto: transcript, usuario_id: usuarioId };
-        if (userLocation) {
-          bodyObj.latitud = userLocation.latitud;
-          bodyObj.longitud = userLocation.longitud;
+        const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
+        if (ubic) {
+          bodyObj.latitud = ubic.latitud;
+          bodyObj.longitud = ubic.longitud;
         }
         (async () => {
           try {
@@ -376,9 +366,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Si no, la petición se hace como usuario anónimo.
     let headers = { 'Content-Type': 'application/json' };
     let bodyObj = { texto: value, usuario_id: usuarioId };
-    if (userLocation) {
-      bodyObj.latitud = userLocation.latitud;
-      bodyObj.longitud = userLocation.longitud;
+    const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
+    if (ubic) {
+      bodyObj.latitud = ubic.latitud;
+      bodyObj.longitud = ubic.longitud;
     }
     let body = JSON.stringify(bodyObj);
     if (window.getAccessToken) {
