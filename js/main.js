@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
   let speakLongTextCancelado = false;
   let esperaLecturaPorVoz = false; // Flag para lectura automática tras tap micrófono
   let lastUserQuestion = null;
+  let userLocation = null;
+  let locationPermissionAsked = false;
 
   // --- Detección estricta de soporte Speech API ---
   function isSpeechApiReallySupported() {
@@ -122,6 +124,50 @@ document.addEventListener('DOMContentLoaded', function() {
   window.speechSynthesis.onvoiceschanged = loadVoices;
   loadVoices();
   // Reconocimiento de voz
+  async function askLocationPermissionIfNeeded() {
+    if (!navigator.geolocation) return;
+    try {
+      const permission = await (navigator.permissions ? navigator.permissions.query({ name: 'geolocation' }) : Promise.resolve({ state: 'prompt' }));
+      if (permission.state === 'granted') {
+        // Siempre refrescar la ubicación si ya está concedido
+        return new Promise(resolve => {
+          navigator.geolocation.getCurrentPosition(pos => {
+            userLocation = {
+              latitud: pos.coords.latitude,
+              longitud: pos.coords.longitude
+            };
+            resolve();
+          }, () => resolve());
+        });
+      } else if (permission.state === 'prompt' && !locationPermissionAsked) {
+        locationPermissionAsked = true;
+        return new Promise(resolve => {
+          navigator.geolocation.getCurrentPosition(pos => {
+            userLocation = {
+              latitud: pos.coords.latitude,
+              longitud: pos.coords.longitude
+            };
+            resolve();
+          }, () => resolve());
+        });
+      }
+      // Si denegado, no hacer nada
+    } catch {
+      // fallback: intentar pedir solo si no se ha preguntado
+      if (!locationPermissionAsked) {
+        locationPermissionAsked = true;
+        return new Promise(resolve => {
+          navigator.geolocation.getCurrentPosition(pos => {
+            userLocation = {
+              latitud: pos.coords.latitude,
+              longitud: pos.coords.longitude
+            };
+            resolve();
+          }, () => resolve());
+        });
+      }
+    }
+  }
   function startRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       info.textContent = 'Tu navegador no soporta reconocimiento de voz.';
@@ -142,24 +188,26 @@ document.addEventListener('DOMContentLoaded', function() {
       info.textContent = '';
       document.getElementById('loader').style.display = 'flex';
       // Mostrar pregunta detectada
-      addMessage(transcript, 'user');
-      recognition.stop(); // Detener reconocimiento inmediatamente
-      // Enviar al webhook
-      showThinkingPlaceholder();
       (async () => {
+        await askLocationPermissionIfNeeded();
+        addMessage(transcript, 'user');
+        recognition.stop(); // Detener reconocimiento inmediatamente
+        // Enviar al webhook
+        showThinkingPlaceholder();
         // Usamos window.getAccessToken() para obtener el token actualizado de Auth0 antes de cada petición.
         // Si el usuario está autenticado y la sesión sigue activa, se añade el token a la cabecera Authorization.
         // Si no, la petición se hace como usuario anónimo.
         let headers = { 'Content-Type': 'application/json' };
-        if (window.getAccessToken) {
-          const token = await window.getAccessToken();
-          if (token) headers['Authorization'] = `Bearer ${token}`;
+        let bodyObj = { texto: transcript, usuario_id: usuarioId };
+        if (userLocation) {
+          bodyObj.latitud = userLocation.latitud;
+          bodyObj.longitud = userLocation.longitud;
         }
         try {
           const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
             method: 'POST',
             headers,
-            body: JSON.stringify({ texto: transcript, usuario_id: usuarioId })
+            body: JSON.stringify(bodyObj)
           });
           const data = await res.json();
           removeThinkingPlaceholder();
@@ -330,6 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
     const value = textInput.value.trim();
     if (!value) return;
+    await askLocationPermissionIfNeeded();
     addMessage(value, 'user');
     textInput.value = '';
     if (speechSupported) {
@@ -345,7 +394,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Si el usuario está autenticado y la sesión sigue activa, se añade el token a la cabecera Authorization.
     // Si no, la petición se hace como usuario anónimo.
     let headers = { 'Content-Type': 'application/json' };
-    let body = JSON.stringify({ texto: value, usuario_id: usuarioId });
+    let bodyObj = { texto: value, usuario_id: usuarioId };
+    if (userLocation) {
+      bodyObj.latitud = userLocation.latitud;
+      bodyObj.longitud = userLocation.longitud;
+    }
+    let body = JSON.stringify(bodyObj);
     if (window.getAccessToken) {
       const token = await window.getAccessToken();
       if (token) headers['Authorization'] = `Bearer ${token}`;
