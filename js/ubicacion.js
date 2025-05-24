@@ -9,6 +9,8 @@ function solicitarUbicacionSiLogeado() {
   if (!navigator.geolocation || !window.auth0Client || typeof window.auth0Client.isAuthenticated !== 'function') return;
   window.auth0Client.isAuthenticated().then(isAuthenticated => {
     if (!isAuthenticated) return;
+    if (ubicacionYaPedida) return; // Solo una vez por sesión
+    ubicacionYaPedida = true;
     if (navigator.permissions) {
       navigator.permissions.query({ name: 'geolocation' }).then(permission => {
         if (permission.state === 'granted' || permission.state === 'prompt') {
@@ -31,39 +33,17 @@ function solicitarUbicacionSiLogeado() {
   });
 }
 
-function setupAuth0LocationWatcher() {
-  if (!window.auth0Client || typeof window.auth0Client.isAuthenticated !== 'function') return;
-  window.auth0Client.isAuthenticated().then(isAuthenticated => {
-    if (isAuthenticated && !wasAuthenticated) {
-      solicitarUbicacionSiLogeado();
-    }
-    wasAuthenticated = isAuthenticated;
-  });
-}
-
 function iniciarWatcherUbicacion() {
-  if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-    solicitarUbicacionSiLogeado();
-    setInterval(setupAuth0LocationWatcher, 1000);
-  } else {
-    const checkAuth = setInterval(function() {
-      if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-        clearInterval(checkAuth);
-        solicitarUbicacionSiLogeado();
-        setInterval(setupAuth0LocationWatcher, 1000);
-      }
-    }, 100);
-  }
   // Watcher para detectar login dinámico y pedir ubicación solo una vez
   setInterval(() => {
     if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
       window.auth0Client.isAuthenticated().then(isAuthenticated => {
         if (isAuthenticated && !ubicacionYaPedida) {
           solicitarUbicacionSiLogeado();
-          ubicacionYaPedida = true;
         }
         if (!isAuthenticated) {
           ubicacionYaPedida = false;
+          userLocation = null;
         }
       });
     }

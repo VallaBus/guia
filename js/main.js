@@ -124,12 +124,10 @@ document.addEventListener('DOMContentLoaded', function() {
   window.speechSynthesis.onvoiceschanged = loadVoices;
   loadVoices();
   // --- Solicitar ubicación al cargar la app SOLO si está logeado ---
-  // Toda la lógica de ubicación se mueve a js/ubicacion.js
-  // Inicializar el watcher de ubicación al cargar
+  // Toda la lógica de ubicación se gestiona en js/ubicacion.js
   if (window.ubicacion && typeof window.ubicacion.iniciarWatcherUbicacion === 'function') {
     window.ubicacion.iniciarWatcherUbicacion();
   } else {
-    // Si aún no está cargado, esperar a que lo esté
     const checkUbicacion = setInterval(function() {
       if (window.ubicacion && typeof window.ubicacion.iniciarWatcherUbicacion === 'function') {
         clearInterval(checkUbicacion);
