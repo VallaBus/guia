@@ -355,3 +355,127 @@ label {
     color: #7be495 !important;
   }
 }
+
+/* Modal de privacidad */
+#privacyModal {
+  z-index: 200;
+}
+#privacyModal:not(.hidden) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.60);
+}
+#privacyModal .prose {
+  max-width: 100%;
+  color: #222;
+  line-height: 1.6;
+}
+
+#privacyModal .prose ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+#privacyModal .prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+#privacyModal .prose p {
+  margin-bottom: 1em;
+}
+
+#privacyModal .prose blockquote {
+  border-left: 4px solid #d1f2e0;
+  padding-left: 1em;
+  margin-left: 0;
+  margin-right: 0;
+  font-style: italic;
+}
+
+.dark #privacyModal .prose blockquote {
+  border-left-color: #355347;
+}
+
+.dark #privacyModal .prose {
+  color: #eaf7ef;
+}
+/* Asegurar que todos los elementos de texto dentro del modal sean legibles en modo oscuro */
+.dark #privacyModal .prose p,
+.dark #privacyModal .prose li,
+.dark #privacyModal .prose h1,
+.dark #privacyModal .prose h2,
+.dark #privacyModal .prose h3,
+.dark #privacyModal .prose h4,
+.dark #privacyModal .prose h5,
+.dark #privacyModal .prose h6,
+.dark #privacyModal .prose strong,
+.dark #privacyModal .prose em,
+.dark #privacyModal .prose blockquote,
+.dark #privacyModal .prose code,
+.dark #privacyModal .prose pre {
+  color: #eaf7ef;
+}
+#privacyModal .rounded-lg {
+  box-shadow: 0 8px 32px #0005;
+}
+#privacyModal button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+#privacyModal h1, #privacyModal h2, #privacyModal h3, #privacyModal h4 {
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+#privacyModal h1 {
+  font-size: 1.8em;
+  border-bottom: 1px solid #d1f2e0;
+  padding-bottom: 0.3em;
+}
+
+#privacyModal h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #d1f2e0;
+  padding-bottom: 0.2em;
+}
+
+#privacyModal h3 {
+  font-size: 1.3em;
+}
+
+#privacyModal h4 {
+  font-size: 1.1em;
+}
+
+.dark #privacyModal h1,
+.dark #privacyModal h2 {
+  border-bottom-color: #355347;
+}
+#privacyModal ul, #privacyModal ol {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+}
+#privacyModal a {
+  color: #228b54;
+  text-decoration: underline;
+}
+.dark #privacyModal a {
+  color: #7be495;
+  text-decoration: underline;
+}
+#privacyModal pre {
+  background: #f4f4f4;
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+.dark #privacyModal pre {
+  background: #1a2320;
+  color: #b7e4c7;
+}

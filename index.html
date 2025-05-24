@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import "./css/style.css?202505241741";
+      @import "./css/style.css?202505241848";
     </style>
   </head>
   <body class="bg-[#5f7262] dark:bg-[#1a2320] text-[#1e4636] dark:text-[#eaf7ef] min-h-screen flex flex-col justify-between font-sans" style="background: linear-gradient(135deg, #5f7262 60%, #34453a 100%); background-repeat: no-repeat; background-attachment: fixed;">
@@ -66,6 +66,9 @@
           <i class="fa-brands fa-telegram"></i> Comunidad
         </a>
       </nav>
+      <div class="mt-auto w-full px-6 pb-6">
+        <a href="#" id="privacyLink" class="text-xs text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline block text-center">Privacidad</a>
+      </div>
     </aside>
     
     <div class="relative flex-1 w-full max-w-md mx-auto px-2 overflow-y-auto space-y-2 pt-16" id="chatContainer">
@@ -104,10 +107,19 @@
   </div>
   <button id="stopBtn" class="rounded-lg bg-[#b7e4c7] dark:bg-[#23382b] text-[#228b54] dark:text-[#b7e4c7] font-semibold py-2 px-4 shadow transition hidden">Detener audio</button>
 </div>
+    <!-- Modal de privacidad -->
+    <div id="privacyModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/60" style="display: none;">
+      <div class="bg-white dark:bg-[#212d26] rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
+        <button id="closePrivacyModal" class="absolute top-3 right-3 text-2xl text-[#434f48] dark:text-[#b7e4c7] hover:text-[#228b54] focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
+        <div id="privacyContent" class="prose dark:prose-invert max-w-none"></div>
+      </div>
+    </div>
+    <script src="js/marked.min.js"></script>
+    <script src="js/configure-marked.js"></script>
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-    <script src="js/auth.js?202505241741"></script>
+    <script src="js/auth.js?202505241848"></script>
     <script src="js/ubicacion.js"></script>
-    <script src="js/main.js?202505241741"></script>
+    <script src="js/main.js?202505241848"></script>
     <script src="js/matomo.js"></script>
 </body>
 </html>

@@ -7,6 +7,14 @@
   }
 })();
 
+// Asegurarse de que el modal de privacidad esté oculto desde el principio
+(function hidePrivacyModalImmediately() {
+  const privacyModal = document.getElementById('privacyModal');
+  if (privacyModal) {
+    privacyModal.classList.add('hidden');
+  }
+})();
+
 function mainVallaBus() {
   document.addEventListener('DOMContentLoaded', function() {
     // --- Variables y elementos principales ---
@@ -828,6 +836,107 @@ function mainVallaBus() {
         speakLongText(respuestaPendiente);
         respuestaPendiente = null;
       }
+    }
+
+    // --- PRIVACIDAD: Modal y carga dinámica ---
+    const privacyLink = document.getElementById('privacyLink');
+    const privacyModal = document.getElementById('privacyModal');
+    const privacyContent = document.getElementById('privacyContent');
+    const closePrivacyModal = document.getElementById('closePrivacyModal');
+
+    // Asegurarse de que el modal esté oculto inicialmente
+    if (privacyModal) {
+      privacyModal.classList.add('hidden');
+      privacyModal.style.display = 'none';
+    }
+
+    if (privacyLink && privacyModal && privacyContent && closePrivacyModal) {
+      privacyLink.addEventListener('click', async function(e) {
+        e.preventDefault();
+        // Preparar el contenido y mostrar el modal
+        privacyContent.innerHTML = '<span class="text-base">Cargando…</span>';
+        privacyModal.classList.remove('hidden');
+        privacyModal.style.display = 'flex';
+        
+        try {
+          const resp = await fetch('privacy.md');
+          if (!resp.ok) {
+            throw new Error(`Error al cargar la política: ${resp.status}`);
+          }
+          const md = await resp.text();
+          if (window.marked) {
+            // Configurar opciones para marked para que maneje mejor los encabezados
+            const markedOptions = {
+              headerIds: true,
+              headerPrefix: 'privacy-heading-'
+            };
+            
+            // Asegurarse de que el contenido se muestre correctamente en modo oscuro
+            privacyContent.innerHTML = window.marked.parse(md, markedOptions);
+            
+            // Aplicar estilos adicionales a los encabezados para hacerlos más visibles
+            const headings = privacyContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            headings.forEach(heading => {
+              // Asegurar que tengan estilo de encabezado
+              heading.style.fontWeight = 'bold';
+              
+              // Aplicar tamaños específicos según el nivel
+              if (heading.tagName === 'H1') {
+                heading.style.fontSize = '1.8em';
+                heading.style.borderBottom = '1px solid #d1f2e0';
+                heading.style.paddingBottom = '0.3em';
+              } else if (heading.tagName === 'H2') {
+                heading.style.fontSize = '1.5em';
+                heading.style.borderBottom = '1px solid #d1f2e0';
+                heading.style.paddingBottom = '0.2em';
+              } else if (heading.tagName === 'H3') {
+                heading.style.fontSize = '1.3em';
+              } else if (heading.tagName === 'H4') {
+                heading.style.fontSize = '1.1em';
+              }
+            });
+            
+            // Forzar aplicación de estilos para modo oscuro si es necesario
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+              const allTextElements = privacyContent.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, strong, em, blockquote, code, pre');
+              allTextElements.forEach(el => {
+                el.style.color = '#eaf7ef';
+              });
+              
+              // Ajustar el estilo de borde para encabezados en modo oscuro
+              const darkHeadings = privacyContent.querySelectorAll('h1, h2');
+              darkHeadings.forEach(heading => {
+                heading.style.borderBottomColor = '#355347';
+              });
+              
+              const allPreElements = privacyContent.querySelectorAll('pre');
+              allPreElements.forEach(el => {
+                el.style.background = '#1a2320';
+              });
+              
+              const allLinkElements = privacyContent.querySelectorAll('a');
+              allLinkElements.forEach(el => {
+                el.style.color = '#7be495';
+              });
+            }
+          } else {
+            privacyContent.innerHTML = '<pre>' + md + '</pre>';
+          }
+        } catch (err) {
+          console.error('Error cargando política de privacidad:', err);
+          privacyContent.innerHTML = '<span class="text-red-600">No se pudo cargar la política de privacidad.</span>';
+        }
+      });
+      closePrivacyModal.addEventListener('click', function() {
+        privacyModal.classList.add('hidden');
+        privacyModal.style.display = 'none';
+      });
+      privacyModal.addEventListener('click', function(e) {
+        if (e.target === privacyModal) {
+          privacyModal.classList.add('hidden');
+          privacyModal.style.display = 'none';
+        }
+      });
     }
   });
 
