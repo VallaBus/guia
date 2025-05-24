@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let utteranceActual = null;
   let speakLongTextCancelado = false;
   let esperaLecturaPorVoz = false; // Flag para lectura automática tras tap micrófono
+  let lastUserQuestion = null;
 
   // --- Detección estricta de soporte Speech API ---
   function isSpeechApiReallySupported() {
@@ -428,16 +429,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const div = document.createElement('div');
     let inner = text;
     if (sender === 'bot') {
-      // Iconos copiar y compartir abajo a la izquierda, con separación y más transparentes
-      inner = `<div class="msg-bot-inner" style="position:relative;display:flex;flex-direction:column;align-items:flex-start;">
-        <div class='msg-text' style='width:100%;'>${text}</div>
-        <div class="msg-actions" style="display:flex;gap:14px;align-items:center;margin-top:10px;margin-left:2px;">
-          <button class="copy-btn" title="Copiar" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:1em;color:#228b54;opacity:0.55;touch-action:manipulation;" tabindex="0" type="button">
-            <i class="fa-regular fa-copy"></i>
-          </button>
-          <button class="share-btn" title="Compartir" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:1em;color:#228b54;opacity:0.55;touch-action:manipulation;" tabindex="0" type="button">
-            <i class="fa-solid fa-share-nodes"></i>
-          </button>
+      // Copiar y compartir a la izquierda, manitas a la derecha
+      inner = `<div class="msg-bot-inner" style="position:relative;display:flex;flex-direction:column;align-items:stretch;width:100%;">
+        <div class='msg-text' style='width:100%;text-align:left;'>${text}</div>
+        <div class="msg-actions" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;margin-top:10px;">
+          <div class="left-actions" style="display:flex;gap:14px;align-items:center;">
+            <button class="copy-btn" title="Copiar" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:1em;color:#228b54;opacity:0.55;touch-action:manipulation;" tabindex="0" type="button">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+            <button class="share-btn" title="Compartir" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:1em;color:#228b54;opacity:0.55;touch-action:manipulation;" tabindex="0" type="button">
+              <i class="fa-solid fa-share-nodes"></i>
+            </button>
+          </div>
+          <div class="feedback-btns" style="display:flex;gap:6px;">
+            <button class="thumbs-up-btn" title="Respuesta útil" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:1.1em;color:#228b54;opacity:0.55;" tabindex="0" type="button">
+              <i class="fa-regular fa-thumbs-up"></i>
+            </button>
+            <button class="thumbs-down-btn" title="Respuesta no útil" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:1.1em;color:#228b54;opacity:0.55;" tabindex="0" type="button">
+              <i class="fa-regular fa-thumbs-down"></i>
+            </button>
+          </div>
         </div>
       </div>`;
     }
@@ -448,6 +459,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Guardar el texto original (con URLs completas) para copiar/compartir
     if (sender === 'bot') {
       div.setAttribute('data-msg-original', (originalText || text).replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''));
+      // Guardar la pregunta asociada a esta respuesta
+      if (window.lastUserQuestion) {
+        div.setAttribute('data-user-question', window.lastUserQuestion);
+      }
     }
     chatContainer.appendChild(div);
     setTimeout(() => {
@@ -455,14 +470,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
     updatePlaceholder();
   
-    // Iconos copiar y compartir solo para bot
+    // Iconos copiar, compartir y feedback solo para bot
     if (sender === 'bot') {
-      // Listeners para desktop y mobile (touch)
       setTimeout(() => {
         const copyBtn = div.querySelector('.copy-btn');
         const shareBtn = div.querySelector('.share-btn');
+        const thumbsUpBtn = div.querySelector('.thumbs-up-btn');
+        const thumbsDownBtn = div.querySelector('.thumbs-down-btn');
         // Usar el texto original guardado en el atributo
         const msgText = div.getAttribute('data-msg-original') || div.querySelector('.msg-text').innerText;
+        const userQuestion = div.getAttribute('data-user-question') || '';
         function showTooltip(btn, msg) {
           let tip = document.createElement('div');
           tip.className = 'msg-tooltip';
@@ -509,7 +526,119 @@ document.addEventListener('DOMContentLoaded', function() {
         if (copyBtn) copyBtn.addEventListener('click', handleCopy);
         if (shareBtn) shareBtn.addEventListener('click', handleShare);
         div.style.position = 'relative';
+        // --- FEEDBACK LOGIC ---
+        // Webhook URL
+        const FEEDBACK_URL = 'https://tasks.nukeador.com/webhook/vallabus-guia-feedback';
+        // Manita arriba
+        if (thumbsUpBtn) thumbsUpBtn.addEventListener('click', async function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          thumbsUpBtn.disabled = true;
+          thumbsDownBtn.disabled = true;
+          thumbsUpBtn.style.opacity = '1';
+          thumbsUpBtn.querySelector('i').classList.remove('fa-regular');
+          thumbsUpBtn.querySelector('i').classList.add('fa-solid');
+          showTooltip(thumbsUpBtn, '¡Gracias por tu feedback!');
+          // Enviar feedback positivo
+          let headers = { 'Content-Type': 'application/json' };
+          if (window.getAccessToken) {
+            const token = await window.getAccessToken();
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+          }
+          fetch(FEEDBACK_URL, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              feedback: 'positivo',
+              respuesta: msgText,
+              pregunta: userQuestion
+            })
+          });
+        });
+        // Manita abajo
+        if (thumbsDownBtn) thumbsDownBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          thumbsUpBtn.disabled = true;
+          thumbsDownBtn.disabled = true;
+          thumbsDownBtn.style.opacity = '1';
+          thumbsDownBtn.querySelector('i').classList.remove('fa-regular');
+          thumbsDownBtn.querySelector('i').classList.add('fa-solid');
+          // Mostrar modal feedback negativo
+          showNegativeFeedbackModal({respuesta: msgText, pregunta: userQuestion, thumbsDownBtn});
+        });
+        // Modal feedback negativo
+        function showNegativeFeedbackModal({respuesta, pregunta, thumbsDownBtn}) {
+          // Si ya existe, no crear otro
+          if (document.getElementById('feedbackModal')) return;
+          const modal = document.createElement('div');
+          modal.id = 'feedbackModal';
+          modal.style.position = 'fixed';
+          modal.style.top = '0';
+          modal.style.left = '0';
+          modal.style.width = '100vw';
+          modal.style.height = '100vh';
+          modal.style.background = 'rgba(0,0,0,0.35)';
+          modal.style.zIndex = '9999';
+          modal.style.display = 'flex';
+          modal.style.alignItems = 'center';
+          modal.style.justifyContent = 'center';
+          // Detectar modo dark
+          const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const bgColor = isDark ? '#23382b' : '#222c24';
+          const textColor = isDark ? '#b7e4c7' : '#fff';
+          const inputBg = isDark ? '#355347' : '#fff';
+          const inputColor = isDark ? '#b7e4c7' : '#222c24';
+          modal.innerHTML = `
+            <form id="feedbackForm" style="background:${bgColor};color:${textColor};padding:28px 22px 18px 22px;border-radius:18px;min-width:320px;max-width:90vw;box-shadow:0 4px 32px #0003;display:flex;flex-direction:column;gap:18px;">
+              <label style="font-size:1.1em;font-weight:600;">¿Qué problema hubo con la respuesta? ¿Cómo se podría mejorar?</label>
+              <textarea name="comentario" rows="3" style="border-radius:8px;padding:8px 10px;font-size:1em;resize:vertical;border:none;outline:none;background:${inputBg};color:${inputColor};"></textarea>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:2px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:1em;"><input type="checkbox" name="motivos" value="dañino" style="accent-color:#228b54;"> Esto es dañino/peligroso</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:1em;"><input type="checkbox" name="motivos" value="no_es_verdad" style="accent-color:#228b54;"> Esto no es verdad</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:1em;"><input type="checkbox" name="motivos" value="no_es_util" style="accent-color:#228b54;"> Esto no es útil</label>
+              </div>
+              <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;">
+                <button type="button" id="cancelFeedbackBtn" style="background:none;border:none;color:#b7e4c7;font-size:1em;cursor:pointer;padding:6px 12px;">Cancelar</button>
+                <button type="submit" style="background:#228b54;color:#fff;border:none;border-radius:8px;padding:6px 18px;font-size:1em;cursor:pointer;">Enviar</button>
+              </div>
+            </form>
+          `;
+          document.body.appendChild(modal);
+          // Cancelar
+          document.getElementById('cancelFeedbackBtn').onclick = () => modal.remove();
+          // Enviar
+          document.getElementById('feedbackForm').onsubmit = async function(ev) {
+            ev.preventDefault();
+            const form = ev.target;
+            const comentario = form.comentario.value.trim();
+            const motivos = Array.from(form.querySelectorAll('input[name="motivos"]:checked')).map(cb => cb.value);
+            // Enviar feedback negativo
+            let headers = { 'Content-Type': 'application/json' };
+            if (window.getAccessToken) {
+              const token = await window.getAccessToken();
+              if (token) headers['Authorization'] = `Bearer ${token}`;
+            }
+            fetch(FEEDBACK_URL, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                feedback: 'negativo',
+                motivos,
+                comentario,
+                respuesta,
+                pregunta
+              })
+            });
+            modal.remove();
+            showTooltip(thumbsDownBtn, '¡Gracias por tu feedback!');
+          };
+        }
       }, 0);
+    }
+    // Guardar la última pregunta enviada por el usuario
+    if (sender === 'user') {
+      window.lastUserQuestion = (originalText || text).replace(/<br>/g, '\n').replace(/<[^>]+>/g, '');
     }
   }
 
