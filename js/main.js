@@ -36,6 +36,7 @@ function mainVallaBus() {
     let lastUserQuestion = null;
     let locationPermissionAsked = false;
     let wasAuthenticated = false; // Nuevo flag para detectar transición de login
+    let esperandoRespuestaBot = false; // Nuevo: flag para bloquear envíos múltiples
 
     // --- Detección estricta de soporte Speech API ---
     function isSpeechApiReallySupported() {
@@ -194,6 +195,8 @@ function mainVallaBus() {
     function mostrarErrorBot(info, textInputForm) {
       removeThinkingPlaceholder();
       document.getElementById('loader').style.display = 'none';
+      esperandoRespuestaBot = false; // Permitir nuevos envíos tras error
+      setControlesUsuarioActivos(true); // Habilitar controles
       if (textInputForm && textInputForm.style.display === 'none' && info) info.style.display = '';
       const errorMsg = getErrorWithRestartButton();
       addMessage(errorMsg, 'bot', getErrorWithRestartButton.voice);
@@ -422,12 +425,28 @@ function mainVallaBus() {
       }
     };
 
+    // --- Habilitar/deshabilitar controles de usuario según estado ---
+    function setControlesUsuarioActivos(activo) {
+      if (micBtn) micBtn.disabled = !activo;
+      if (keyboardBtn) keyboardBtn.disabled = !activo;
+      if (textInput) textInput.disabled = !activo;
+    }
+
     // Enviar consulta por texto
     textInputForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      if (!await checkAuthAndRedirectIfNeeded()) return;
+      if (esperandoRespuestaBot) return; // Bloquear si esperando respuesta
+      setControlesUsuarioActivos(false); // Deshabilitar controles
+      if (!await checkAuthAndRedirectIfNeeded()) {
+        setControlesUsuarioActivos(true);
+        return;
+      }
       const value = textInput.value.trim();
-      if (!value) return;
+      if (!value) {
+        setControlesUsuarioActivos(true);
+        return;
+      }
+      esperandoRespuestaBot = true; // Bloquear nuevos envíos
       addMessage(value, 'user');
       textInput.value = '';
       if (speechSupported) {
@@ -443,7 +462,11 @@ function mainVallaBus() {
       añadirUbicacionSiDisponible(bodyObj);
       let body = JSON.stringify(bodyObj);
       let headers = await construirHeaders();
-      if (!headers || !headers['Authorization']) return; // Si no hay token, no enviar
+      if (!headers || !headers['Authorization']) {
+        esperandoRespuestaBot = false;
+        setControlesUsuarioActivos(true);
+        return; // Si no hay token, no enviar
+      }
       try {
         const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
           method: 'POST',
@@ -454,6 +477,8 @@ function mainVallaBus() {
         handleBotResponse(data, {infoRef: info, textInputFormRef: textInputForm});
       } catch {
         mostrarErrorBot(info, textInputForm);
+        esperandoRespuestaBot = false;
+        setControlesUsuarioActivos(true);
         return;
       }
     });
@@ -464,7 +489,12 @@ function mainVallaBus() {
     }
 
     micBtn.addEventListener('click', async () => {
-      if (!await checkAuthAndRedirectIfNeeded()) return;
+      if (esperandoRespuestaBot) return; // Bloquear si esperando respuesta
+      setControlesUsuarioActivos(false); // Deshabilitar controles
+      if (!await checkAuthAndRedirectIfNeeded()) {
+        setControlesUsuarioActivos(true);
+        return;
+      }
       // Workaround Safari iOS: despertar SpeechSynthesis
       if (/iP(ad|hone|od)/.test(navigator.userAgent)) {
         try {
@@ -882,6 +912,8 @@ function mainVallaBus() {
     function handleBotResponse(data, {originalPregunta = null, infoRef = null, textInputFormRef = null} = {}) {
       removeThinkingPlaceholder();
       document.getElementById('loader').style.display = 'none';
+      esperandoRespuestaBot = false; // Permitir nuevos envíos
+      setControlesUsuarioActivos(true); // Habilitar controles
       if (textInputFormRef && textInputFormRef.style.display === 'none' && infoRef) infoRef.style.display = '';
       let respuesta = data.output || getErrorWithRestartButton();
       let respuestaParaVoz, respuestaConEnlaces;
