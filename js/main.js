@@ -168,11 +168,20 @@ function mainVallaBus() {
           const token = await window.getAccessToken();
           if (token && typeof token === 'string' && token.split('.').length === 3) {
             headers['Authorization'] = `Bearer ${token}`;
+          } else {
+            // Si no hay token, solo ocultar controles y mostrar login
+            window.mostrarSoloLogin && window.mostrarSoloLogin();
+            return null;
           }
-        } catch (e) {}
+        } catch (e) {
+          // Si hay error al obtener token, solo ocultar controles y mostrar login
+          window.mostrarSoloLogin && window.mostrarSoloLogin();
+          return null;
+        }
       }
       return headers;
     }
+
     // --- Utilidad para añadir ubicación si está disponible ---
     function añadirUbicacionSiDisponible(bodyObj) {
       const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
@@ -222,11 +231,12 @@ function mainVallaBus() {
           let headers = null;
           (async () => {
             headers = await construirHeaders();
+            if (!headers || !headers['Authorization']) return; // Si no hay token, no enviar
             try {
               const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
                 method: 'POST',
-                headers,
-                body
+                headers: headers,
+                body: body
               });
               const data = await res.json();
               handleBotResponse(data, {infoRef: info, textInputFormRef: textInputForm});
@@ -363,9 +373,59 @@ function mainVallaBus() {
       });
     }
 
+    // --- Control de autenticación centralizado ---
+    async function checkAuthAndRedirectIfNeeded() {
+      if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+        const isAuthenticated = await window.auth0Client.isAuthenticated();
+        if (!isAuthenticated) {
+          // Si estaba autenticado y ahora no, forzar UI a estado no logueado
+          if (wasAuthenticated) {
+            window.mostrarSoloLogin();
+          }
+          // Ya NO redirigimos automáticamente, solo mostramos login
+          return false;
+        } else {
+          wasAuthenticated = true;
+        }
+      }
+      return true;
+    }
+
+    // Oculta todos los controles y muestra solo el login principal (reutilizable globalmente)
+    window.mostrarSoloLogin = function mostrarSoloLogin() {
+      const info = document.getElementById('info');
+      const textInputForm = document.getElementById('textInputForm');
+      const loader = document.getElementById('loader');
+      const stopBtn = document.getElementById('stopBtn');
+      const speakerBtn = document.getElementById('speakerBtn');
+      const micBtn = document.getElementById('micBtn');
+      const keyboardBtn = document.getElementById('keyboardBtn');
+      if (info) info.style.display = 'none';
+      if (textInputForm) textInputForm.style.display = 'none';
+      if (loader) loader.style.display = 'none';
+      if (stopBtn) stopBtn.style.display = 'none';
+      if (speakerBtn) speakerBtn.style.display = 'none';
+      if (micBtn) micBtn.style.display = 'none';
+      if (keyboardBtn) keyboardBtn.style.display = 'none';
+      let loginMainBtn = document.getElementById('main-login-btn');
+      if (!loginMainBtn) {
+        loginMainBtn = document.createElement('button');
+        loginMainBtn.id = 'main-login-btn';
+        loginMainBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión';
+        loginMainBtn.className = 'login-main-btn';
+        loginMainBtn.onclick = () => window.auth0Client && window.auth0Client.loginWithRedirect && window.auth0Client.loginWithRedirect({ authorizationParams: { redirect_uri: window.location.origin } });
+        const bottomBar = document.querySelector('.fixed-bottom-bar');
+        if (bottomBar) bottomBar.appendChild(loginMainBtn);
+        else document.body.appendChild(loginMainBtn);
+      } else {
+        loginMainBtn.style.display = 'block';
+      }
+    };
+
     // Enviar consulta por texto
     textInputForm.addEventListener('submit', async function(e) {
       e.preventDefault();
+      if (!await checkAuthAndRedirectIfNeeded()) return;
       const value = textInput.value.trim();
       if (!value) return;
       addMessage(value, 'user');
@@ -383,6 +443,7 @@ function mainVallaBus() {
       añadirUbicacionSiDisponible(bodyObj);
       let body = JSON.stringify(bodyObj);
       let headers = await construirHeaders();
+      if (!headers || !headers['Authorization']) return; // Si no hay token, no enviar
       try {
         const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
           method: 'POST',
@@ -402,7 +463,8 @@ function mainVallaBus() {
       setTextMode(false);
     }
 
-    micBtn.addEventListener('click', () => {
+    micBtn.addEventListener('click', async () => {
+      if (!await checkAuthAndRedirectIfNeeded()) return;
       // Workaround Safari iOS: despertar SpeechSynthesis
       if (/iP(ad|hone|od)/.test(navigator.userAgent)) {
         try {
@@ -1074,7 +1136,23 @@ function mainVallaBus() {
       }, 100);
     }
   });
-}
 
-// --- Mostrar modal de aceptación de privacidad SOLO al iniciar sesión por primera vez ---
-// (Eliminado: ahora la lógica está dentro de mainVallaBus)
+  // Comprobación de autenticación al cargar la app (espera a que auth0Client esté listo)
+  (function checkAuthOnLoadWaiter() {
+    if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+      console.log('[VallaBus] auth0Client listo, comprobando autenticación inicial...');
+      window.auth0Client.isAuthenticated().then(isAuthenticated => {
+        console.log('[VallaBus] ¿Usuario autenticado al cargar?', isAuthenticated);
+        if (!isAuthenticated) {
+          console.log('[VallaBus] Usuario NO autenticado al cargar, ocultando controles y mostrando login.');
+          window.mostrarSoloLogin && window.mostrarSoloLogin();
+        } else {
+          console.log('[VallaBus] Usuario autenticado al cargar, mostrando controles normales.');
+        }
+      });
+    } else {
+      console.log('[VallaBus] Esperando a que auth0Client esté listo...');
+      setTimeout(checkAuthOnLoadWaiter, 50);
+    }
+  })();
+}

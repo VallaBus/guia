@@ -59,30 +59,14 @@ window.onload = async () => {
   const keyboardBtn = document.getElementById('keyboardBtn');
   let loginMainBtn = document.getElementById('main-login-btn');
   if (!isAuthenticated) {
-    // Oculta todos los controles de la barra inferior
-    if (info) info.style.display = 'none';
-    if (textInputForm) textInputForm.style.display = 'none';
-    if (loader) loader.style.display = 'none';
-    if (stopBtn) stopBtn.style.display = 'none';
-    if (speakerBtn) speakerBtn.style.display = 'none';
-    if (micBtn) micBtn.style.display = 'none';
-    if (keyboardBtn) keyboardBtn.style.display = 'none';
-    if (!loginMainBtn) {
-      loginMainBtn = document.createElement('button');
-      loginMainBtn.id = 'main-login-btn';
-      loginMainBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión';
-      loginMainBtn.className = 'login-main-btn';
-      loginMainBtn.onclick = login;
-      const bottomBar = document.querySelector('.fixed-bottom-bar');
-      if (bottomBar) bottomBar.appendChild(loginMainBtn);
-    } else {
-      loginMainBtn.style.display = 'block';
-    }
+    // Usa la función global para ocultar controles y mostrar solo el login
+    if (window.mostrarSoloLogin) window.mostrarSoloLogin();
     // Mostrar el enlace de invitación si existe
     const inviteBtn = document.getElementById('inviteBtn');
     if (inviteBtn) inviteBtn.style.display = '';
   } else {
     // Solo ocultar el botón de login, pero NO forzar display de los demás (deja que main.js controle)
+    const loginMainBtn = document.getElementById('main-login-btn');
     if (loginMainBtn) loginMainBtn.style.display = 'none';
     // Ocultar el enlace de invitación si existe
     const inviteBtn = document.getElementById('inviteBtn');
