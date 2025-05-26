@@ -479,3 +479,28 @@ label {
   background: #1a2320;
   color: #b7e4c7;
 }
+
+/* --- MODAL MARKDOWN LEGAL/AYUDA --- */
+.modal-md-heading { font-weight: bold; margin-top: 1.2em; margin-bottom: 0.5em; }
+.modal-md-h1 { font-size: 1.8em; border-bottom: 1px solid #d1f2e0; padding-bottom: 0.3em; }
+.modal-md-h2 { font-size: 1.5em; border-bottom: 1px solid #d1f2e0; padding-bottom: 0.2em; }
+.modal-md-h3 { font-size: 1.3em; }
+.modal-md-h4 { font-size: 1.1em; }
+.modal-md-paragraph { margin-bottom: 1em; }
+.modal-md-list { margin-left: 1.5em; margin-bottom: 1em; }
+.modal-md-link { color: #228b54; text-decoration: underline; }
+.modal-md-pre { background: #f8fef9; color: #185d39; padding: 1em; border-radius: 8px; overflow-x: auto; }
+.modal-md-code { background: #eaf7ef; color: #185d39; padding: 2px 6px; border-radius: 4px; }
+.modal-md-blockquote { border-left: 4px solid #228b54; padding-left: 1em; color: #185d39; margin: 1em 0; }
+
+/* Dark mode para modales markdown */
+@media (prefers-color-scheme: dark) {
+  .modal-md-heading, .modal-md-paragraph, .modal-md-list, .modal-md-blockquote, .modal-md-link, .modal-md-pre, .modal-md-code {
+    color: #fff !important;
+  }
+  .modal-md-h1, .modal-md-h2 { border-bottom-color: #355347; }
+  .modal-md-pre { background: #1a2320; }
+  .modal-md-code { background: #355347; }
+  .modal-md-link { color: #7be495 !important; }
+  .modal-md-blockquote { border-left-color: #7be495; }
+}

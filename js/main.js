@@ -932,97 +932,114 @@ function mainVallaBus() {
       }
     }
 
-    // --- PRIVACIDAD: Modal y carga dinámica ---
-    const privacyLink = document.getElementById('privacyLink');
-    const privacyModal = document.getElementById('privacyModal');
-    const privacyContent = document.getElementById('privacyContent');
-    const closePrivacyModal = document.getElementById('closePrivacyModal');
-
-    // Asegurarse de que el modal esté oculto inicialmente
-    if (privacyModal) {
-      privacyModal.classList.add('hidden');
-      privacyModal.style.display = 'none';
-    }
-
-    // --- FUNCIÓN REUTILIZABLE PARA ABRIR LA POLÍTICA DE PRIVACIDAD ---
-    async function abrirModalPrivacidad() {
-      privacyContent.innerHTML = '<span class="text-base">Cargando…</span>';
-      privacyModal.classList.remove('hidden');
-      privacyModal.style.display = 'flex';
-      try {
-        const resp = await fetch('privacy.md');
-        if (!resp.ok) throw new Error('Error al cargar la política: ' + resp.status);
-        const md = await resp.text();
-        if (window.marked) {
-          const markedOptions = { headerIds: true, headerPrefix: 'privacy-heading-' };
-          privacyContent.innerHTML = window.marked.parse(md, markedOptions);
-          // Aplicar estilos adicionales a los encabezados para hacerlos más visibles
-          const headings = privacyContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
-          headings.forEach(heading => {
-            heading.style.fontWeight = 'bold';
-            if (heading.tagName === 'H1') {
-              heading.style.fontSize = '1.8em';
-              heading.style.borderBottom = '1px solid #d1f2e0';
-              heading.style.paddingBottom = '0.3em';
-            } else if (heading.tagName === 'H2') {
-              heading.style.fontSize = '1.5em';
-              heading.style.borderBottom = '1px solid #d1f2e0';
-              heading.style.paddingBottom = '0.2em';
-            } else if (heading.tagName === 'H3') {
-              heading.style.fontSize = '1.3em';
-            } else if (heading.tagName === 'H4') {
-              heading.style.fontSize = '1.1em';
-            }
-          });
-          // Forzar aplicación de estilos para modo oscuro si es necesario
-          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            const allTextElements = privacyContent.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, strong, em, blockquote, code, pre');
-            allTextElements.forEach(el => {
-              el.style.setProperty('color', '#fff', 'important');
+    // --- FUNCIÓN REUTILIZABLE PARA INICIALIZAR MODALES DE MARKDOWN (legal, ayuda, etc) ---
+    function inicializarModalMarkdown({
+      linkIds = [], // IDs de los enlaces que abren el modal (pueden ser varios)
+      modalId,
+      contentId,
+      closeBtnId,
+      mdFile,
+      title = '',
+      acceptModalId = null // Si se debe volver al modal de aceptación si no se ha aceptado
+    }) {
+      const modal = document.getElementById(modalId);
+      const contentDiv = document.getElementById(contentId);
+      const closeBtn = document.getElementById(closeBtnId);
+      const acceptModal = acceptModalId ? document.getElementById(acceptModalId) : null;
+      if (!modal || !contentDiv || !closeBtn) return;
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+      // Función para abrir el modal y cargar el markdown
+      async function abrirModal() {
+        contentDiv.innerHTML = '<span class="text-base">Cargando…</span>';
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        try {
+          const resp = await fetch(mdFile);
+          if (!resp.ok) throw new Error('Error al cargar el documento: ' + resp.status);
+          const md = await resp.text();
+          if (window.marked) {
+            const markedOptions = { headerIds: true, headerPrefix: mdFile.replace(/\..*$/, '') + '-heading-' };
+            contentDiv.innerHTML = window.marked.parse(md, markedOptions);
+            // Añadir clases semánticas a headings y otros elementos
+            const headings = contentDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            headings.forEach(heading => {
+              heading.classList.add('modal-md-heading', `modal-md-${heading.tagName.toLowerCase()}`);
             });
-            const darkHeadings = privacyContent.querySelectorAll('h1, h2');
-            darkHeadings.forEach(heading => {
-              heading.style.borderBottomColor = '#355347';
-            });
-            const allPreElements = privacyContent.querySelectorAll('pre');
-            allPreElements.forEach(el => {
-              el.style.background = '#1a2320';
-              el.style.setProperty('color', '#fff', 'important');
-            });
-            const allLinkElements = privacyContent.querySelectorAll('a');
-            allLinkElements.forEach(el => {
-              el.style.setProperty('color', '#7be495', 'important');
-            });
+            const paragraphs = contentDiv.querySelectorAll('p');
+            paragraphs.forEach(p => p.classList.add('modal-md-paragraph'));
+            const lists = contentDiv.querySelectorAll('ul, ol');
+            lists.forEach(list => list.classList.add('modal-md-list'));
+            const links = contentDiv.querySelectorAll('a');
+            links.forEach(link => link.classList.add('modal-md-link'));
+            const preBlocks = contentDiv.querySelectorAll('pre');
+            preBlocks.forEach(pre => pre.classList.add('modal-md-pre'));
+            const codeBlocks = contentDiv.querySelectorAll('code');
+            codeBlocks.forEach(code => code.classList.add('modal-md-code'));
+            const blockquotes = contentDiv.querySelectorAll('blockquote');
+            blockquotes.forEach(bq => bq.classList.add('modal-md-blockquote'));
+          } else {
+            contentDiv.innerHTML = '<pre>' + md + '</pre>';
           }
-        } else {
-          privacyContent.innerHTML = '<pre>' + md + '</pre>';
+        } catch (err) {
+          contentDiv.innerHTML = `<span class="text-red-600">No se pudo cargar el documento.</span>`;
         }
-      } catch (err) {
-        privacyContent.innerHTML = '<span class="text-red-600">No se pudo cargar la política de privacidad.</span>';
       }
-    }
-
-    if (privacyLink && privacyModal && privacyContent && closePrivacyModal) {
-      privacyLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        abrirModalPrivacidad();
+      // Asignar listeners a todos los enlaces de apertura
+      linkIds.forEach(id => {
+        const link = document.getElementById(id);
+        if (link) {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (acceptModal) acceptModal.style.display = 'none';
+            abrirModal();
+          });
+        }
       });
-      closePrivacyModal.addEventListener('click', function() {
-        privacyModal.classList.add('hidden');
-        privacyModal.style.display = 'none';
+      // Cierre por botón
+      closeBtn.addEventListener('click', function() {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        // Si no se ha aceptado la privacidad y hay acceptModal, volver a mostrarlo
+        if (acceptModal && localStorage.getItem('privacyAccepted') !== 'true') {
+          acceptModal.style.display = 'flex';
+        }
       });
-      privacyModal.addEventListener('click', function(e) {
-        if (e.target === privacyModal) {
-          privacyModal.classList.add('hidden');
-          privacyModal.style.display = 'none';
+      // Cierre por click fuera del contenido
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+          if (acceptModal && localStorage.getItem('privacyAccepted') !== 'true') {
+            acceptModal.style.display = 'flex';
+          }
         }
       });
     }
 
-    // --- Lógica de modal de aceptación de privacidad (mejorada: también tras login dinámico) ---
+    // --- INICIALIZAR MODALES DE DOCUMENTOS LEGALES ---
+    inicializarModalMarkdown({
+      linkIds: ['privacyLink', 'openPrivacyModal'],
+      modalId: 'privacyModal',
+      contentId: 'privacyContent',
+      closeBtnId: 'closePrivacyModal',
+      mdFile: 'privacy.md',
+      title: 'Política de privacidad',
+      acceptModalId: 'privacyAcceptModal'
+    });
+    inicializarModalMarkdown({
+      linkIds: ['termsLink', 'openTermsModal'],
+      modalId: 'termsModal',
+      contentId: 'termsContent',
+      closeBtnId: 'closeTermsModal',
+      mdFile: 'terminos.md',
+      title: 'Términos de uso',
+      acceptModalId: 'privacyAcceptModal'
+    });
+
+    // --- Lógica de modal de aceptación de privacidad (solo DRY, sin listeners antiguos) ---
     const acceptModal = document.getElementById('privacyAcceptModal');
     const acceptBtn = document.getElementById('acceptPrivacyBtn');
-    const showPrivacyFromAccept = document.getElementById('openPrivacyModal');
     let privacyModalShown = false;
     async function checkAndShowPrivacyModal() {
       let isAuthenticated = false;
@@ -1040,7 +1057,6 @@ function mainVallaBus() {
         privacyModalShown = false;
       }
     }
-    // Comprobar al cargar y luego periódicamente (por si login dinámico)
     checkAndShowPrivacyModal();
     setInterval(checkAndShowPrivacyModal, 1000);
     if (acceptBtn) {
@@ -1049,33 +1065,6 @@ function mainVallaBus() {
         acceptModal.style.display = 'none';
         document.body.style.overflow = '';
       });
-    }
-    if (showPrivacyFromAccept) {
-      showPrivacyFromAccept.addEventListener('click', function(e) {
-        e.preventDefault();
-        acceptModal.style.display = 'none';
-        abrirModalPrivacidad();
-      });
-    }
-    // Al cerrar el modal de privacidad desde el flujo de aceptación, volver a mostrar el modal de aceptar si no se ha aceptado
-    if (privacyModal && acceptModal) {
-      const closePrivacyModal = document.getElementById('closePrivacyModal');
-      privacyModal.addEventListener('click', function(e) {
-        if (e.target === privacyModal && localStorage.getItem('privacyAccepted') !== 'true') {
-          privacyModal.classList.add('hidden');
-          privacyModal.style.display = 'none';
-          acceptModal.style.display = 'flex';
-        }
-      });
-      if (closePrivacyModal) {
-        closePrivacyModal.addEventListener('click', function() {
-          if (localStorage.getItem('privacyAccepted') !== 'true') {
-            privacyModal.classList.add('hidden');
-            privacyModal.style.display = 'none';
-            acceptModal.style.display = 'flex';
-          }
-        });
-      }
     }
   });
 

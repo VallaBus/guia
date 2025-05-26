@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import "./css/style.css?202505260053";
+      @import "./css/style.css?202505261203";
     </style>
   </head>
   <body class="bg-[#5f7262] dark:bg-[#1a2320] text-[#1e4636] dark:text-[#eaf7ef] min-h-screen flex flex-col justify-between font-sans" style="background: linear-gradient(135deg, #5f7262 60%, #34453a 100%); background-repeat: no-repeat; background-attachment: fixed;">
@@ -68,6 +68,7 @@
       </nav>
       <div class="mt-auto w-full px-6 pb-6">
         <a href="#" id="privacyLink" class="text-xs text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline block text-center">Privacidad</a>
+        <a href="#" id="termsLink" class="text-xs text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline block text-center mt-1">Términos de uso</a>
       </div>
     </aside>
     
@@ -114,12 +115,19 @@
         <div id="privacyContent" class="prose dark:prose-invert max-w-none"></div>
       </div>
     </div>
+    <!-- Modal de términos de uso -->
+    <div id="termsModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/60" style="display: none;">
+      <div class="bg-white dark:bg-[#212d26] rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
+        <button id="closeTermsModal" class="absolute top-3 right-3 text-2xl text-[#434f48] dark:text-[#b7e4c7] hover:text-[#228b54] focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
+        <div id="termsContent" class="prose dark:prose-invert max-w-none"></div>
+      </div>
+    </div>
     <!-- Modal de aceptación de la política de privacidad -->
 <div id="privacyAcceptModal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/70" style="display:none;">
   <div class="bg-white dark:bg-[#212d26] rounded-lg shadow-lg max-w-md w-full p-6 flex flex-col items-center relative">
-    <h2 class="text-xl font-semibold mb-4 text-[#228b54] dark:text-[#b7e4c7]">Política de Privacidad</h2>
+    <h2 class="text-xl font-semibold mb-4 text-[#228b54] dark:text-[#b7e4c7]">Información importante</h2>
     <p class="mb-4 text-center text-[#434f48] dark:text-[#b7e4c7]">
-      Para continuar usando la aplicación, debes aceptar nuestra <a href="#" id="openPrivacyModal" class="underline text-[#228b54] dark:text-[#b7e4c7] hover:text-[#145c37] pointer-events-auto" tabindex="0">Política de Privacidad</a>.
+      Para continuar usando la aplicación, debes aceptar nuestra <a href="#" id="openPrivacyModal" class="underline text-[#228b54] dark:text-[#b7e4c7] hover:text-[#145c37] pointer-events-auto" tabindex="0">Política de privacidad</a> y nuestros <a href="#" id="openTermsModal" class="underline text-[#228b54] dark:text-[#b7e4c7] hover:text-[#145c37] pointer-events-auto" tabindex="0">Términos de uso</a>.
     </p>
     <button id="acceptPrivacyBtn" class="bg-[#228b54] hover:bg-[#145c37] text-white font-bold py-2 px-6 rounded focus:outline-none focus:ring-2 focus:ring-[#228b54] focus:ring-opacity-50 transition">Aceptar</button>
   </div>
@@ -130,9 +138,9 @@
     <script src="js/marked.min.js"></script>
     <script src="js/configure-marked.js"></script>
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-    <script src="js/auth.js?202505260053"></script>
+    <script src="js/auth.js?202505261203"></script>
     <script src="js/ubicacion.js"></script>
-    <script src="js/main.js?202505260053"></script>
+    <script src="js/main.js?202505261203"></script>
     <script src="js/matomo.js"></script>
 </body>
 </html>
