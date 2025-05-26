@@ -121,21 +121,17 @@ function mainVallaBus() {
       textInput.addEventListener('blur', hideTextInputTooltip);
     }
 
-    // Generar o recuperar un id único de usuario
-    function getUserId() {
-      let id = localStorage.getItem('usuario_id');
-      if (!id) {
-        if (window.crypto && window.crypto.randomUUID) {
-          id = crypto.randomUUID();
-        } else {
-          // Fallback simple
-          id = 'u-' + Math.random().toString(36).slice(2) + Date.now();
-        }
-        localStorage.setItem('usuario_id', id);
+    // Generar un id de sesión único por carga de la webapp
+    function getSessionId() {
+      if (window._sessionId) return window._sessionId;
+      if (window.crypto && window.crypto.randomUUID) {
+        window._sessionId = crypto.randomUUID();
+      } else {
+        window._sessionId = 's-' + Math.random().toString(36).slice(2) + Date.now();
       }
-      return id;
+      return window._sessionId;
     }
-    const usuarioId = getUserId();
+    const sessionId = getSessionId();
     // Cargar voces
     function loadVoices() {
       voices = window.speechSynthesis.getVoices();
@@ -228,7 +224,7 @@ function mainVallaBus() {
           // Enviar al webhook
           showThinkingPlaceholder();
           // --- Nuevo flujo DRY ---
-          let bodyObj = { texto: transcript, usuario_id: usuarioId };
+          let bodyObj = { texto: transcript, session_id: sessionId };
           añadirUbicacionSiDisponible(bodyObj);
           let body = JSON.stringify(bodyObj);
           let headers = null;
@@ -458,7 +454,7 @@ function mainVallaBus() {
       document.getElementById('loader').style.display = 'flex';
       showThinkingPlaceholder();
       // --- Nuevo flujo DRY ---
-      let bodyObj = { texto: value, usuario_id: usuarioId };
+      let bodyObj = { texto: value, session_id: sessionId };
       añadirUbicacionSiDisponible(bodyObj);
       let body = JSON.stringify(bodyObj);
       let headers = await construirHeaders();
