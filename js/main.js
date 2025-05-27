@@ -894,6 +894,8 @@ function mainVallaBus() {
               return `<a href="${url}" target="_blank" rel="noopener" class="block w-full text-center text-white font-medium bg-[#698374] dark:bg-[#355347] py-2 px-3 my-2 rounded-lg hover:bg-[#56635a] dark:hover:bg-[#23382b] transition-colors"><i class="fa-solid fa-route mr-2"></i>Ver ruta y alternativas</a>`;
             } else if (url.startsWith('https://vallabus.com/#/horarios/')) {
               return `<a href="${url}" target="_blank" rel="noopener" class="block w-full text-center text-white font-medium bg-[#698374] dark:bg-[#355347] py-2 px-3 my-2 rounded-lg hover:bg-[#56635a] dark:hover:bg-[#23382b] transition-colors"><i class="fa-solid fa-bus mr-2"></i>Info y horarios</a>`;
+            } else if (url === 'https://vallabus.com/#/cercanas') {
+              return `<a href="${url}" target="_blank" rel="noopener" class="block w-full text-center text-white font-medium bg-[#698374] dark:bg-[#355347] py-2 px-3 my-2 rounded-lg hover:bg-[#56635a] dark:hover:bg-[#23382b] transition-colors"><i class="fa-solid fa-bus mr-2"></i>Ver paradas cercanas</a>`;
             } else {
               return `<a href="${url}" target="_blank" rel="noopener" class="text-[#228b54] dark:text-[#7be495] underline">${urlObj.hostname}</a>`;
             }
