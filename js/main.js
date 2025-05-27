@@ -430,6 +430,14 @@ function mainVallaBus() {
 
     // Enviar consulta por texto
     textInputForm.addEventListener('submit', async function(e) {
+      if (textInput && textInput.value.length > 500) {
+        e.preventDefault();
+        textInput.value = textInput.value.slice(0, 500);
+        if (document.getElementById('charCounter')) {
+          document.getElementById('charCounter').textContent = 0;
+        }
+        return;
+      }
       e.preventDefault();
       if (esperandoRespuestaBot) return; // Bloquear si esperando respuesta
       setControlesUsuarioActivos(false); // Deshabilitar controles
@@ -1064,114 +1072,195 @@ function mainVallaBus() {
         document.body.style.overflow = '';
       });
     }
-  });
 
-  // Registrar el service worker para PWA
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/service-worker.js');
+    // --- Autogrow para textarea y contador de caracteres ---
+    if (textInput && textInput.tagName === 'TEXTAREA') {
+      const charCounter = document.getElementById('charCounter');
+      const maxChars = 500;
+      function updateCharCounter() {
+        const remaining = maxChars - textInput.value.length;
+        if (charCounter) charCounter.textContent = remaining;
+      }
+      textInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        if (this.value.length > maxChars) {
+          this.value = this.value.slice(0, maxChars);
+        }
+        updateCharCounter();
+      });
+      // Inicializar altura y contador
+      textInput.style.height = 'auto';
+      textInput.style.height = (textInput.scrollHeight) + 'px';
+      updateCharCounter();
+    }
+
+    // Validar límite de caracteres al enviar
+    textInputForm.addEventListener('submit', async function(e) {
+      if (textInput && textInput.value.length > 500) {
+        e.preventDefault();
+        textInput.value = textInput.value.slice(0, 500);
+        if (document.getElementById('charCounter')) {
+          document.getElementById('charCounter').textContent = 0;
+        }
+        return;
+      }
+      e.preventDefault();
+      if (esperandoRespuestaBot) return; // Bloquear si esperando respuesta
+      setControlesUsuarioActivos(false); // Deshabilitar controles
+      if (!await checkAuthAndRedirectIfNeeded()) {
+        setControlesUsuarioActivos(true);
+        return;
+      }
+      const value = textInput.value.trim();
+      if (!value) {
+        setControlesUsuarioActivos(true);
+        return;
+      }
+      esperandoRespuestaBot = true; // Bloquear nuevos envíos
+      addMessage(value, 'user');
+      textInput.value = '';
+      if (speechSupported) {
+        setTextMode(false);
+      }
+      // Ocultar "Pulsa para hablar" antes de mostrar loader
+      const info = document.getElementById('info');
+      if (info) info.style.display = 'none';
+      document.getElementById('loader').style.display = 'flex';
+      showThinkingPlaceholder();
+      // --- Nuevo flujo DRY ---
+      let bodyObj = { texto: value, session_id: sessionId };
+      añadirUbicacionSiDisponible(bodyObj);
+      let body = JSON.stringify(bodyObj);
+      let headers = await construirHeaders();
+      if (!headers || !headers['Authorization']) {
+        esperandoRespuestaBot = false;
+        setControlesUsuarioActivos(true);
+        return; // Si no hay token, no enviar
+      }
+      try {
+        const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
+          method: 'POST',
+          headers,
+          body
+        });
+        const data = await res.json();
+        handleBotResponse(data, {infoRef: info, textInputFormRef: textInputForm});
+      } catch {
+        mostrarErrorBot(info, textInputForm);
+        esperandoRespuestaBot = false;
+        setControlesUsuarioActivos(true);
+        return;
+      }
     });
-  }
 
-  // Sidebar logic
-  const menuBtn = document.getElementById('menuBtn');
-  const sidebar = document.getElementById('sidebarMenu');
-  const overlay = document.getElementById('sidebarOverlay');
-  const closeBtn = document.getElementById('closeSidebarBtn');
-
-  function openSidebar() {
-    sidebar.classList.remove('translate-x-full');
-    overlay.classList.remove('opacity-0', 'pointer-events-none');
-    overlay.classList.add('opacity-100');
-  }
-  function closeSidebar() {
-    sidebar.classList.add('translate-x-full');
-    overlay.classList.add('opacity-0', 'pointer-events-none');
-    overlay.classList.remove('opacity-100');
-  }
-  menuBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    openSidebar();
-  });
-  closeBtn.addEventListener('click', closeSidebar);
-  overlay.addEventListener('click', closeSidebar);
-  // Cerrar con swipe (touch)
-  let startX = null;
-  sidebar.addEventListener('touchstart', e => {
-    if (e.touches.length === 1) startX = e.touches[0].clientX;
-  });
-  sidebar.addEventListener('touchmove', e => {
-    if (startX !== null) {
-      const deltaX = e.touches[0].clientX - startX;
-      if (deltaX < -60) closeSidebar();
-    }
-  });
-  sidebar.addEventListener('touchend', () => { startX = null; });
-  // Cerrar con Escape
-  window.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeSidebar();
-  });
-
-  // Ocultar el botón de invitación si el usuario está logeado
-  document.addEventListener('DOMContentLoaded', async function() {
-    if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-      const isAuthenticated = await window.auth0Client.isAuthenticated();
-      const inviteBtn = document.getElementById('inviteBtn');
-      if (inviteBtn) inviteBtn.style.display = isAuthenticated ? 'none' : '';
-    } else {
-      // Si auth0Client aún no está listo, esperar a que lo esté
-      const checkAuth = setInterval(async () => {
-        if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-          clearInterval(checkAuth);
-          const isAuthenticated = await window.auth0Client.isAuthenticated();
-          const inviteBtn = document.getElementById('inviteBtn');
-          if (inviteBtn) inviteBtn.style.display = isAuthenticated ? 'none' : '';
-        }
-      }, 200);
-    }
-  });
-
-  // Mostrar/ocultar placeholder e invitación solo cuando Auth0 esté listo
-  window.addEventListener('DOMContentLoaded', function() {
-    function showPlaceholderAndInvite(isAuthenticated) {
-      var placeholder = document.getElementById('placeholderVallaBus');
-      var inviteBtn = document.getElementById('inviteBtn');
-      if (placeholder) placeholder.style.display = '';
-      if (inviteBtn) inviteBtn.style.display = isAuthenticated ? 'none' : '';
-    }
-    if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-      window.auth0Client.isAuthenticated().then(isAuthenticated => {
-        showPlaceholderAndInvite(isAuthenticated);
+    // Registrar el service worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js');
       });
-    } else {
-      // Esperar a que auth0Client esté listo
-      const checkAuth = setInterval(function() {
-        if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-          clearInterval(checkAuth);
-          window.auth0Client.isAuthenticated().then(isAuthenticated => {
-            showPlaceholderAndInvite(isAuthenticated);
-          });
-        }
-      }, 100);
     }
-  });
 
-  // Comprobación de autenticación al cargar la app (espera a que auth0Client esté listo)
-  (function checkAuthOnLoadWaiter() {
-    if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-      console.log('[VallaBus] auth0Client listo, comprobando autenticación inicial...');
-      window.auth0Client.isAuthenticated().then(isAuthenticated => {
-        console.log('[VallaBus] ¿Usuario autenticado al cargar?', isAuthenticated);
-        if (!isAuthenticated) {
-          console.log('[VallaBus] Usuario NO autenticado al cargar, ocultando controles y mostrando login.');
-          window.mostrarSoloLogin && window.mostrarSoloLogin();
-        } else {
-          console.log('[VallaBus] Usuario autenticado al cargar, mostrando controles normales.');
-        }
-      });
-    } else {
-      console.log('[VallaBus] Esperando a que auth0Client esté listo...');
-      setTimeout(checkAuthOnLoadWaiter, 50);
+    // Sidebar logic
+    const menuBtn = document.getElementById('menuBtn');
+    const sidebar = document.getElementById('sidebarMenu');
+    const overlay = document.getElementById('sidebarOverlay');
+    const closeBtn = document.getElementById('closeSidebarBtn');
+
+    function openSidebar() {
+      sidebar.classList.remove('translate-x-full');
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+      overlay.classList.add('opacity-100');
     }
-  })();
+    function closeSidebar() {
+      sidebar.classList.add('translate-x-full');
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+      overlay.classList.remove('opacity-100');
+    }
+    menuBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      openSidebar();
+    });
+    closeBtn.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+    // Cerrar con swipe (touch)
+    let startX = null;
+    sidebar.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) startX = e.touches[0].clientX;
+    });
+    sidebar.addEventListener('touchmove', e => {
+      if (startX !== null) {
+        const deltaX = e.touches[0].clientX - startX;
+        if (deltaX < -60) closeSidebar();
+      }
+    });
+    sidebar.addEventListener('touchend', () => { startX = null; });
+    // Cerrar con Escape
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeSidebar();
+    });
+
+    // Ocultar el botón de invitación si el usuario está logeado
+    document.addEventListener('DOMContentLoaded', async function() {
+      if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+        const isAuthenticated = await window.auth0Client.isAuthenticated();
+        const inviteBtn = document.getElementById('inviteBtn');
+        if (inviteBtn) inviteBtn.style.display = isAuthenticated ? 'none' : '';
+      } else {
+        // Si auth0Client aún no está listo, esperar a que lo esté
+        const checkAuth = setInterval(async () => {
+          if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+            clearInterval(checkAuth);
+            const isAuthenticated = await window.auth0Client.isAuthenticated();
+            const inviteBtn = document.getElementById('inviteBtn');
+            if (inviteBtn) inviteBtn.style.display = isAuthenticated ? 'none' : '';
+          }
+        }, 200);
+      }
+    });
+
+    // Mostrar/ocultar placeholder e invitación solo cuando Auth0 esté listo
+    window.addEventListener('DOMContentLoaded', function() {
+      function showPlaceholderAndInvite(isAuthenticated) {
+        var placeholder = document.getElementById('placeholderVallaBus');
+        var inviteBtn = document.getElementById('inviteBtn');
+        if (placeholder) placeholder.style.display = '';
+        if (inviteBtn) inviteBtn.style.display = isAuthenticated ? 'none' : '';
+      }
+      if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+        window.auth0Client.isAuthenticated().then(isAuthenticated => {
+          showPlaceholderAndInvite(isAuthenticated);
+        });
+      } else {
+        // Esperar a que auth0Client esté listo
+        const checkAuth = setInterval(function() {
+          if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+            clearInterval(checkAuth);
+            window.auth0Client.isAuthenticated().then(isAuthenticated => {
+              showPlaceholderAndInvite(isAuthenticated);
+            });
+          }
+        }, 100);
+      }
+    });
+
+    // Comprobación de autenticación al cargar la app (espera a que auth0Client esté listo)
+    (function checkAuthOnLoadWaiter() {
+      if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
+        console.log('[VallaBus] auth0Client listo, comprobando autenticación inicial...');
+        window.auth0Client.isAuthenticated().then(isAuthenticated => {
+          console.log('[VallaBus] ¿Usuario autenticado al cargar?', isAuthenticated);
+          if (!isAuthenticated) {
+            console.log('[VallaBus] Usuario NO autenticado al cargar, ocultando controles y mostrando login.');
+            window.mostrarSoloLogin && window.mostrarSoloLogin();
+          } else {
+            console.log('[VallaBus] Usuario autenticado al cargar, mostrando controles normales.');
+          }
+        });
+      } else {
+        console.log('[VallaBus] Esperando a que auth0Client esté listo...');
+        setTimeout(checkAuthOnLoadWaiter, 50);
+      }
+    })();
+  });
 }
