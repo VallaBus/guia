@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import "./css/style.css?202505271433";
+      @import "./css/style.css?202505271656";
     </style>
   </head>
   <body class="bg-[#5f7262] dark:bg-[#1a2320] text-[#1e4636] dark:text-[#eaf7ef] min-h-screen flex flex-col justify-between font-sans" style="background: linear-gradient(135deg, #5f7262 60%, #34453a 100%); background-repeat: no-repeat; background-attachment: fixed;">
@@ -89,7 +89,7 @@
         <button id="speakerBtn" title="Leer respuestas en alto" class="absolute left-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#eaf7ef] text-[#434f48] border-2 border-[#698374] dark:bg-[#355347] dark:text-[#b7e4c7] dark:border-[#23382b] p-2 text-lg">
           <i id="speakerIcon" class="fa-solid fa-volume-up"></i>
         </button>
-        <button id="micBtn" title="Hablar o parar" class="relative flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#434f48] text-white border-4 border-[#698374] dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347]" style="width:110px;height:110px;font-size:3.2rem;z-index:10;">
+        <button id="micBtn" title="Hablar o parar" class="relative flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#434f48] text-white border-4 border-[#698374] dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347]">
           <span id="micIcon"><i class="fa-solid fa-microphone"></i></span>
         </button>
         <button id="keyboardBtn" title="Modo texto" class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#eaf7ef] text-[#434f48] border-2 border-[#698374] dark:bg-[#355347] dark:text-[#b7e4c7] dark:border-[#23382b] p-2 text-lg">
@@ -102,7 +102,7 @@
   <div id="info" class="text-[#4e8c6c] dark:text-[#b7e4c7] text-base text-center font-medium">Pulsa para hablar</div>
   <form id="textInputForm" class="text-input-bar flex items-center w-full h-full gap-2" style="display:none;">
     <div class="relative flex-1 h-full flex flex-col justify-end">
-      <textarea id="textInput" autocomplete="off" placeholder="Pregunta lo que quieras" rows="1" maxlength="500" class="flex-1 h-full rounded-lg border-none px-4 py-3 text-xl bg-transparent focus:outline-none focus:ring-0 resize-none overflow-y-auto" style="min-height:48px;max-height:160px;"></textarea>
+      <textarea id="textInput" autocomplete="off" placeholder="Pregunta lo que quieras" rows="1" maxlength="500" class="flex-1 h-full rounded-lg border-none px-4 py-3 text-xl bg-transparent focus:outline-none focus:ring-0 resize-none overflow-y-auto touch-auto vallabus-textarea"></textarea>
       <div id="charCounter" class="absolute bottom-1 right-3 text-xs text-[#228b54] dark:text-[#7be495] opacity-70 select-none pointer-events-none">500</div>
     </div>
     <button type="submit" class="rounded-full bg-[#434f48] text-white border-4 border-[#698374] dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347] flex items-center justify-center shadow transition w-12 h-12 p-0"><i class="fa-solid fa-arrow-right fa-lg"></i></button>
@@ -142,9 +142,9 @@
     <script src="js/marked.min.js"></script>
     <script src="js/configure-marked.js"></script>
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-    <script src="js/auth.js?202505271433"></script>
+    <script src="js/auth.js?202505271656"></script>
     <script src="js/ubicacion.js"></script>
-    <script src="js/main.js?202505271433"></script>
+    <script src="js/main.js?202505271656"></script>
     <script src="js/matomo.js"></script>
 </body>
 </html>

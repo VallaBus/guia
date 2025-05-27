@@ -100,13 +100,13 @@ header h1 {
     position: relative;
   }
   #micBtn {
-    width: 100px !important;
-    height: 100px !important;
-    font-size: 3.2rem !important;
+    width: 110px;
+    height: 110px;
+    font-size: 3.2rem;
     margin: 0 auto;
     pointer-events: auto;
     transition: box-shadow 0.2s;
-    z-index: 110 !important;
+    z-index: 110;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -509,4 +509,11 @@ label {
   .modal-md-code { background: #355347; }
   .modal-md-link { color: #7be495 !important; }
   .modal-md-blockquote { border-left-color: #7be495; }
+}
+
+.vallabus-textarea {
+  min-height: 48px;
+  max-height: 160px;
+  overflow-y: auto;
+  touch-action: auto;
 }
