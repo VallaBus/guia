@@ -1,3 +1,5 @@
+window.handleSocialAppWebViewUI && window.handleSocialAppWebViewUI();
+
 // Esperar a que window.getAccessToken esté disponible antes de ejecutar el resto de main.js
 (function waitForAuth0Ready() {
   if (window.getAccessToken && typeof window.getAccessToken === 'function') {
