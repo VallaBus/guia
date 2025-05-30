@@ -194,11 +194,95 @@ function mainVallaBus() {
       removeThinkingPlaceholder();
       document.getElementById('loader').style.display = 'none';
       esperandoRespuestaBot = false; // Permitir nuevos envíos tras error
-      setControlesUsuarioActivos(true); // Habilitar controles
+      
+      // Verificar si el botón de login está visible
+      const loginBtn = document.getElementById('main-login-btn');
+      const isLoginVisible = loginBtn && loginBtn.style.display !== 'none';
+      
+      if (!isLoginVisible) {
+        // Solo habilitar controles si el usuario está autenticado
+        setControlesUsuarioActivos(true);
+      } else {
+        // Si hay botón de login visible, asegurarse que los controles permanezcan ocultos
+        window.mostrarSoloLogin && window.mostrarSoloLogin();
+        return;
+      }
+      
       if (textInputForm && textInputForm.style.display === 'none' && info) info.style.display = '';
       const errorMsg = getErrorWithRestartButton();
       addMessage(errorMsg, 'bot', getErrorWithRestartButton.voice);
     }
+
+    // --- Unifica la gestión de errores de autenticación y token para fetchs del bot ---
+    function handleAuthErrorAndShowLogin({forceHideAll = false} = {}) {
+      removeThinkingPlaceholder();
+      document.getElementById('loader').style.display = 'none';
+      esperandoRespuestaBot = false;
+      // No activar controles aquí, ya que mostrarSoloLogin se encargará de ocultarlos
+      
+      // Oculta todos los controles SIEMPRE, no solo si ya existe el botón
+      const info = document.getElementById('info');
+      const textInputForm = document.getElementById('textInputForm');
+      const loader = document.getElementById('loader');
+      const stopBtn = document.getElementById('stopBtn');
+      const speakerBtn = document.getElementById('speakerBtn');
+      const micBtn = document.getElementById('micBtn');
+      const keyboardBtn = document.getElementById('keyboardBtn');
+      if (info) info.style.display = 'none';
+      if (textInputForm) textInputForm.style.display = 'none';
+      if (loader) loader.style.display = 'none';
+      if (stopBtn) stopBtn.style.display = 'none';
+      if (speakerBtn) speakerBtn.style.display = 'none';
+      if (micBtn) micBtn.style.display = 'none';
+      if (keyboardBtn) keyboardBtn.style.display = 'none';
+      let loginMainBtn = document.getElementById('main-login-btn');
+      if (!loginMainBtn) {
+        loginMainBtn = document.createElement('button');
+        loginMainBtn.id = 'main-login-btn';
+        loginMainBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión';
+        loginMainBtn.className = 'login-main-btn';
+        loginMainBtn.onclick = () => window.auth0Client && window.auth0Client.loginWithRedirect && window.auth0Client.loginWithRedirect({ authorizationParams: { redirect_uri: window.location.origin } });
+        const bottomBar = document.querySelector('.fixed-bottom-bar');
+        if (bottomBar) bottomBar.appendChild(loginMainBtn);
+        else document.body.appendChild(loginMainBtn);
+      } else {
+        loginMainBtn.style.display = 'block';
+      }
+    }
+
+    // --- Lógica centralizada para enviar mensaje al bot y gestionar errores de autenticación ---
+    async function enviarMensajeAlBot({texto, sessionId, infoRef, textInputFormRef}) {
+      let bodyObj = { texto, session_id: sessionId };
+      añadirUbicacionSiDisponible(bodyObj);
+      let body = JSON.stringify(bodyObj);
+      let headers = await construirHeaders();
+      if (!headers || !headers['Authorization']) {
+        handleAuthErrorAndShowLogin({forceHideAll: true});
+        return;
+      }
+      try {
+        const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
+          method: 'POST',
+          headers,
+          body
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            handleAuthErrorAndShowLogin({forceHideAll: true});
+            return;
+          }
+          throw new Error('Error en la respuesta: ' + res.status);
+        }
+        const data = await res.json();
+        handleBotResponse(data, {infoRef, textInputFormRef});
+      } catch {
+        mostrarErrorBot(infoRef, textInputFormRef);
+        esperandoRespuestaBot = false;
+        setControlesUsuarioActivos(true);
+        return;
+      }
+    }
+
     // Reconocimiento de voz
     function startRecognition() {
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -223,28 +307,13 @@ function mainVallaBus() {
         (function() {
           addMessage(transcript, 'user');
           recognition.stop(); // Detener reconocimiento inmediatamente
-          // Enviar al webhook
           showThinkingPlaceholder();
-          // --- Nuevo flujo DRY ---
-          let bodyObj = { texto: transcript, session_id: sessionId };
-          añadirUbicacionSiDisponible(bodyObj);
-          let body = JSON.stringify(bodyObj);
-          let headers = null;
-          (async () => {
-            headers = await construirHeaders();
-            if (!headers || !headers['Authorization']) return; // Si no hay token, no enviar
-            try {
-              const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
-                method: 'POST',
-                headers: headers,
-                body: body
-              });
-              const data = await res.json();
-              handleBotResponse(data, {infoRef: info, textInputFormRef: textInputForm});
-            } catch (err) {
-              mostrarErrorBot(info, textInputForm);
-            }
-          })();
+          enviarMensajeAlBot({
+            texto: transcript,
+            sessionId,
+            infoRef: info,
+            textInputFormRef: textInputForm
+          });
         })();
       };
       recognition.onerror = (event) => {
@@ -331,6 +400,15 @@ function mainVallaBus() {
     function setTextMode(active) {
       const info = document.getElementById('info');
       const speakerBtn = document.getElementById('speakerBtn');
+      // No mostrar controles si hay botón de login visible (usuario no autenticado)
+      const loginBtn = document.getElementById('main-login-btn');
+      const isLoginVisible = loginBtn && loginBtn.style.display !== 'none';
+      
+      if (isLoginVisible) {
+        // Si hay botón de login visible, no hacer nada (mantener ocultos los controles)
+        return;
+      }
+      
       if (active) {
         micBtn.style.display = 'none';
         keyboardBtn.style.display = 'none'; // Ocultamos el botón de teclado en modo texto
@@ -425,6 +503,15 @@ function mainVallaBus() {
 
     // --- Habilitar/deshabilitar controles de usuario según estado ---
     function setControlesUsuarioActivos(activo) {
+      // Verificar si el botón de login está visible (usuario no autenticado)
+      const loginBtn = document.getElementById('main-login-btn');
+      const isLoginVisible = loginBtn && loginBtn.style.display !== 'none';
+      
+      // Si el botón de login está visible, no habilitar controles
+      if (isLoginVisible && activo) {
+        return;
+      }
+      
       if (micBtn) micBtn.disabled = !activo;
       if (keyboardBtn) keyboardBtn.disabled = !activo;
       if (textInput) textInput.disabled = !activo;
@@ -444,7 +531,8 @@ function mainVallaBus() {
       if (esperandoRespuestaBot) return; // Bloquear si esperando respuesta
       setControlesUsuarioActivos(false); // Deshabilitar controles
       if (!await checkAuthAndRedirectIfNeeded()) {
-        setControlesUsuarioActivos(true);
+        // No activar controles si no está autenticado, mostrar login en su lugar
+        window.mostrarSoloLogin && window.mostrarSoloLogin();
         return;
       }
       const value = textInput.value.trim();
@@ -463,30 +551,12 @@ function mainVallaBus() {
       if (info) info.style.display = 'none';
       document.getElementById('loader').style.display = 'flex';
       showThinkingPlaceholder();
-      // --- Nuevo flujo DRY ---
-      let bodyObj = { texto: value, session_id: sessionId };
-      añadirUbicacionSiDisponible(bodyObj);
-      let body = JSON.stringify(bodyObj);
-      let headers = await construirHeaders();
-      if (!headers || !headers['Authorization']) {
-        esperandoRespuestaBot = false;
-        setControlesUsuarioActivos(true);
-        return; // Si no hay token, no enviar
-      }
-      try {
-        const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
-          method: 'POST',
-          headers,
-          body
-        });
-        const data = await res.json();
-        handleBotResponse(data, {infoRef: info, textInputFormRef: textInputForm});
-      } catch {
-        mostrarErrorBot(info, textInputForm);
-        esperandoRespuestaBot = false;
-        setControlesUsuarioActivos(true);
-        return;
-      }
+      await enviarMensajeAlBot({
+        texto: value,
+        sessionId,
+        infoRef: info,
+        textInputFormRef: textInputForm
+      });
     });
 
     // Mostrar solo uno de los botones según modo al cargar
@@ -498,7 +568,8 @@ function mainVallaBus() {
       if (esperandoRespuestaBot) return; // Bloquear si esperando respuesta
       setControlesUsuarioActivos(false); // Deshabilitar controles
       if (!await checkAuthAndRedirectIfNeeded()) {
-        setControlesUsuarioActivos(true);
+        // No activar controles si no está autenticado, mostrar login en su lugar
+        window.mostrarSoloLogin && window.mostrarSoloLogin();
         return;
       }
       // Workaround Safari iOS: despertar SpeechSynthesis
@@ -921,7 +992,20 @@ function mainVallaBus() {
       removeThinkingPlaceholder();
       document.getElementById('loader').style.display = 'none';
       esperandoRespuestaBot = false; // Permitir nuevos envíos
-      setControlesUsuarioActivos(true); // Habilitar controles
+      
+      // Verificar si el botón de login está visible
+      const loginBtn = document.getElementById('main-login-btn');
+      const isLoginVisible = loginBtn && loginBtn.style.display !== 'none';
+      
+      if (!isLoginVisible) {
+        // Solo habilitar controles si el usuario está autenticado
+        setControlesUsuarioActivos(true);
+      } else {
+        // Si hay botón de login visible, asegurarse que los controles permanezcan ocultos
+        window.mostrarSoloLogin && window.mostrarSoloLogin();
+        return;
+      }
+      
       if (textInputFormRef && textInputFormRef.style.display === 'none' && infoRef) infoRef.style.display = '';
       let respuesta = data.output || getErrorWithRestartButton();
       let respuestaParaVoz, respuestaConEnlaces;
@@ -1111,7 +1195,8 @@ function mainVallaBus() {
       if (esperandoRespuestaBot) return; // Bloquear si esperando respuesta
       setControlesUsuarioActivos(false); // Deshabilitar controles
       if (!await checkAuthAndRedirectIfNeeded()) {
-        setControlesUsuarioActivos(true);
+        // No activar controles si no está autenticado, mostrar login en su lugar
+        window.mostrarSoloLogin && window.mostrarSoloLogin();
         return;
       }
       const value = textInput.value.trim();
@@ -1130,30 +1215,12 @@ function mainVallaBus() {
       if (info) info.style.display = 'none';
       document.getElementById('loader').style.display = 'flex';
       showThinkingPlaceholder();
-      // --- Nuevo flujo DRY ---
-      let bodyObj = { texto: value, session_id: sessionId };
-      añadirUbicacionSiDisponible(bodyObj);
-      let body = JSON.stringify(bodyObj);
-      let headers = await construirHeaders();
-      if (!headers || !headers['Authorization']) {
-        esperandoRespuestaBot = false;
-        setControlesUsuarioActivos(true);
-        return; // Si no hay token, no enviar
-      }
-      try {
-        const res = await fetch('https://tasks.nukeador.com/webhook/vallabus-guia', {
-          method: 'POST',
-          headers,
-          body
-        });
-        const data = await res.json();
-        handleBotResponse(data, {infoRef: info, textInputFormRef: textInputForm});
-      } catch {
-        mostrarErrorBot(info, textInputForm);
-        esperandoRespuestaBot = false;
-        setControlesUsuarioActivos(true);
-        return;
-      }
+      await enviarMensajeAlBot({
+        texto: value,
+        sessionId,
+        infoRef: info,
+        textInputFormRef: textInputForm
+      });
     });
 
     // Registrar el service worker para PWA
