@@ -18,7 +18,7 @@ window.handleSocialAppWebViewUI = function handleSocialAppWebViewUI() {
       placeholder.style.display = '';
       const originalBtns = Array.from(placeholder.querySelectorAll('a, button')).map(el => el.outerHTML).join(' ');
       placeholder.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-2"></i>Para poder usar esta webapp correctamente debes abrirla desde el navegador de tu dispositivo (Chrome, Safari, etc). El navegador interno de apps no es compatible.<br><br>' + originalBtns;
-      placeholder.className = 'text-base text-[#b91c1c] dark:text-[#fca5a5] font-semibold text-center px-4 py-4';
+      placeholder.className = 'text-base text-[#890000] dark:text-[#fca5a5] font-semibold text-center px-4 py-4';
     }
     if (inviteBtn) inviteBtn.style.display = '';
     var micBtn = document.getElementById('micBtn');
