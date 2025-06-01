@@ -1006,6 +1006,15 @@ function mainVallaBus() {
         return;
       }
       
+      if (!isLoginVisible) {
+        // Solo habilitar controles si el usuario está autenticado
+        setControlesUsuarioActivos(true);
+      } else {
+        // Si hay botón de login visible, asegurarse que los controles permanezcan ocultos
+        window.mostrarSoloLogin && window.mostrarSoloLogin();
+        return;
+      }
+      
       if (textInputFormRef && textInputFormRef.style.display === 'none' && infoRef) infoRef.style.display = '';
       let respuesta = data.output || getErrorWithRestartButton();
       let respuestaParaVoz, respuestaConEnlaces;
@@ -1313,21 +1322,71 @@ function mainVallaBus() {
       }
     });
 
-    // Comprobación de autenticación al cargar la app (espera a que auth0Client esté listo)
+    // Comprobación de autenticación al cargar la app (espera a que auth0Client esté listo y procesa el callback de Auth0 si es necesario)
     (function checkAuthOnLoadWaiter() {
-      if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
-        console.log('[VallaBus] auth0Client listo, comprobando autenticación inicial...');
-        window.auth0Client.isAuthenticated().then(isAuthenticated => {
-          console.log('[VallaBus] ¿Usuario autenticado al cargar?', isAuthenticated);
-          if (!isAuthenticated) {
-            console.log('[VallaBus] Usuario NO autenticado al cargar, ocultando controles y mostrando login.');
-            window.mostrarSoloLogin && window.mostrarSoloLogin();
-          } else {
-            console.log('[VallaBus] Usuario autenticado al cargar, mostrando controles normales.');
-          }
-        });
+      if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function' && typeof construirHeaders === 'function') {
+        // Detectar si estamos en el callback de Auth0 (tras login)
+        if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
+          window.auth0Client.handleRedirectCallback().then(() => {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            construirHeaders().then(headers => {
+              if (!headers || !headers['Authorization']) {
+                window.mostrarSoloLogin && window.mostrarSoloLogin();
+              } else {
+                // Eliminar el botón de login si existe
+                const loginMainBtn = document.getElementById('main-login-btn');
+                if (loginMainBtn) loginMainBtn.remove();
+                // Mostrar controles de usuario y activarlos
+                if (typeof setTextMode === 'function' && speechSupported) {
+                  setTextMode(false); // Solo micrófono visible por defecto
+                } else {
+                  if (info) info.style.display = '';
+                  if (textInputForm) textInputForm.style.display = '';
+                }
+                setControlesUsuarioActivos(true);
+              }
+            });
+          }).catch(e => {
+            // Silenciar error de estado inválido (puede ocurrir si el usuario refresca en el callback)
+            window.history.replaceState({}, document.title, window.location.pathname);
+            construirHeaders().then(headers => {
+              if (!headers || !headers['Authorization']) {
+                window.mostrarSoloLogin && window.mostrarSoloLogin();
+              } else {
+                // Eliminar el botón de login si existe
+                const loginMainBtn = document.getElementById('main-login-btn');
+                if (loginMainBtn) loginMainBtn.remove();
+                // Mostrar controles de usuario y activarlos
+                if (typeof setTextMode === 'function' && speechSupported) {
+                  setTextMode(false); // Solo micrófono visible por defecto
+                } else {
+                  if (info) info.style.display = '';
+                  if (textInputForm) textInputForm.style.display = '';
+                }
+                setControlesUsuarioActivos(true);
+              }
+            });
+          });
+        } else {
+          construirHeaders().then(headers => {
+            if (!headers || !headers['Authorization']) {
+              window.mostrarSoloLogin && window.mostrarSoloLogin();
+            } else {
+              // Eliminar el botón de login si existe
+              const loginMainBtn = document.getElementById('main-login-btn');
+              if (loginMainBtn) loginMainBtn.remove();
+              // Mostrar controles de usuario y activarlos
+              if (typeof setTextMode === 'function' && speechSupported) {
+                setTextMode(false); // Solo micrófono visible por defecto
+              } else {
+                if (info) info.style.display = '';
+                if (textInputForm) textInputForm.style.display = '';
+              }
+              setControlesUsuarioActivos(true);
+            }
+          });
+        }
       } else {
-        console.log('[VallaBus] Esperando a que auth0Client esté listo...');
         setTimeout(checkAuthOnLoadWaiter, 50);
       }
     })();
