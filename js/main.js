@@ -241,7 +241,7 @@ function mainVallaBus() {
         loginMainBtn.id = 'main-login-btn';
         loginMainBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Inicia sesión o regístrate';
         loginMainBtn.className = 'login-main-btn';
-        loginMainBtn.onclick = () => window.auth0Client && window.auth0Client.loginWithRedirect && window.auth0Client.loginWithRedirect({ authorizationParams: { redirect_uri: window.location.origin, screen_hint: 'signup' } });
+        loginMainBtn.onclick = () => window.auth0Client && window.auth0Client.loginWithRedirect && window.auth0Client.loginWithRedirect({ authorizationParams: { redirect_uri: window.location.origin } });
         const bottomBar = document.querySelector('.fixed-bottom-bar');
         if (bottomBar) bottomBar.appendChild(loginMainBtn);
         else document.body.appendChild(loginMainBtn);
@@ -492,7 +492,7 @@ function mainVallaBus() {
         loginMainBtn.id = 'main-login-btn';
         loginMainBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Inicia sesión o regístrate';
         loginMainBtn.className = 'login-main-btn';
-        loginMainBtn.onclick = () => window.auth0Client && window.auth0Client.loginWithRedirect && window.auth0Client.loginWithRedirect({ authorizationParams: { redirect_uri: window.location.origin, screen_hint: 'signup' } });
+        loginMainBtn.onclick = () => window.auth0Client && window.auth0Client.loginWithRedirect && window.auth0Client.loginWithRedirect({ authorizationParams: { redirect_uri: window.location.origin } });
         const bottomBar = document.querySelector('.fixed-bottom-bar');
         if (bottomBar) bottomBar.appendChild(loginMainBtn);
         else document.body.appendChild(loginMainBtn);
