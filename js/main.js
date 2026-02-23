@@ -18,7 +18,7 @@ window.handleSocialAppWebViewUI && window.handleSocialAppWebViewUI();
 })();
 
 function mainVallaBus() {
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     // --- Variables y elementos principales ---
     const micBtn = document.getElementById('micBtn');
     const micIcon = document.getElementById('micIcon');
@@ -152,7 +152,7 @@ function mainVallaBus() {
     if (window.ubicacion && typeof window.ubicacion.iniciarWatcherUbicacion === 'function') {
       waitForAuth0ClientAndStartUbicacion_LOG();
     } else {
-      const checkUbicacion = setInterval(function() {
+      const checkUbicacion = setInterval(function () {
         if (window.ubicacion && typeof window.ubicacion.iniciarWatcherUbicacion === 'function') {
           clearInterval(checkUbicacion);
           waitForAuth0ClientAndStartUbicacion_LOG();
@@ -194,11 +194,11 @@ function mainVallaBus() {
       removeThinkingPlaceholder();
       document.getElementById('loader').style.display = 'none';
       esperandoRespuestaBot = false; // Permitir nuevos envíos tras error
-      
+
       // Verificar si el botón de login está visible
       const loginBtn = document.getElementById('main-login-btn');
       const isLoginVisible = loginBtn && loginBtn.style.display !== 'none';
-      
+
       if (!isLoginVisible) {
         // Solo habilitar controles si el usuario está autenticado
         setControlesUsuarioActivos(true);
@@ -207,19 +207,19 @@ function mainVallaBus() {
         window.mostrarSoloLogin && window.mostrarSoloLogin();
         return;
       }
-      
+
       if (textInputForm && textInputForm.style.display === 'none' && info) info.style.display = '';
       const errorMsg = getErrorWithRestartButton();
       addMessage(errorMsg, 'bot', getErrorWithRestartButton.voice);
     }
 
     // --- Unifica la gestión de errores de autenticación y token para fetchs del bot ---
-    function handleAuthErrorAndShowLogin({forceHideAll = false} = {}) {
+    function handleAuthErrorAndShowLogin({ forceHideAll = false } = {}) {
       removeThinkingPlaceholder();
       document.getElementById('loader').style.display = 'none';
       esperandoRespuestaBot = false;
       // No activar controles aquí, ya que mostrarSoloLogin se encargará de ocultarlos
-      
+
       // Oculta todos los controles SIEMPRE, no solo si ya existe el botón
       const info = document.getElementById('info');
       const textInputForm = document.getElementById('textInputForm');
@@ -251,13 +251,13 @@ function mainVallaBus() {
     }
 
     // --- Lógica centralizada para enviar mensaje al bot y gestionar errores de autenticación ---
-    async function enviarMensajeAlBot({texto, sessionId, infoRef, textInputFormRef}) {
+    async function enviarMensajeAlBot({ texto, sessionId, infoRef, textInputFormRef }) {
       let bodyObj = { texto, session_id: sessionId };
       añadirUbicacionSiDisponible(bodyObj);
       let body = JSON.stringify(bodyObj);
       let headers = await construirHeaders();
       if (!headers || !headers['Authorization']) {
-        handleAuthErrorAndShowLogin({forceHideAll: true});
+        handleAuthErrorAndShowLogin({ forceHideAll: true });
         return;
       }
       try {
@@ -268,13 +268,13 @@ function mainVallaBus() {
         });
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
-            handleAuthErrorAndShowLogin({forceHideAll: true});
+            handleAuthErrorAndShowLogin({ forceHideAll: true });
             return;
           }
           throw new Error('Error en la respuesta: ' + res.status);
         }
         const data = await res.json();
-        handleBotResponse(data, {infoRef, textInputFormRef});
+        handleBotResponse(data, { infoRef, textInputFormRef });
       } catch {
         mostrarErrorBot(infoRef, textInputFormRef);
         esperandoRespuestaBot = false;
@@ -304,7 +304,7 @@ function mainVallaBus() {
         info.textContent = '';
         document.getElementById('loader').style.display = 'flex';
         // Mostrar pregunta detectada
-        (function() {
+        (function () {
           addMessage(transcript, 'user');
           recognition.stop(); // Detener reconocimiento inmediatamente
           showThinkingPlaceholder();
@@ -403,12 +403,12 @@ function mainVallaBus() {
       // No mostrar controles si hay botón de login visible (usuario no autenticado)
       const loginBtn = document.getElementById('main-login-btn');
       const isLoginVisible = loginBtn && loginBtn.style.display !== 'none';
-      
+
       if (isLoginVisible) {
         // Si hay botón de login visible, no hacer nada (mantener ocultos los controles)
         return;
       }
-      
+
       if (active) {
         micBtn.style.display = 'none';
         keyboardBtn.style.display = 'none'; // Ocultamos el botón de teclado en modo texto
@@ -506,19 +506,19 @@ function mainVallaBus() {
       // Verificar si el botón de login está visible (usuario no autenticado)
       const loginBtn = document.getElementById('main-login-btn');
       const isLoginVisible = loginBtn && loginBtn.style.display !== 'none';
-      
+
       // Si el botón de login está visible, no habilitar controles
       if (isLoginVisible && activo) {
         return;
       }
-      
+
       if (micBtn) micBtn.disabled = !activo;
       if (keyboardBtn) keyboardBtn.disabled = !activo;
       if (textInput) textInput.disabled = !activo;
     }
 
     // Enviar consulta por texto
-    textInputForm.addEventListener('submit', async function(e) {
+    textInputForm.addEventListener('submit', async function (e) {
       if (textInput && textInput.value.length > 500) {
         e.preventDefault();
         textInput.value = textInput.value.slice(0, 500);
@@ -578,7 +578,7 @@ function mainVallaBus() {
           const dummy = new SpeechSynthesisUtterance('.');
           dummy.volume = 0;
           window.speechSynthesis.speak(dummy);
-        } catch(e) {}
+        } catch (e) { }
       }
       speakLongTextCancelado = true; // Igual que el botón detener
       window.speechSynthesis.cancel(); // Detener cualquier voz en curso
@@ -641,7 +641,7 @@ function mainVallaBus() {
         div.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }, 100);
       updatePlaceholder();
-    
+
       // Iconos copiar, compartir y feedback solo para bot
       if (sender === 'bot') {
         setTimeout(() => {
@@ -702,7 +702,7 @@ function mainVallaBus() {
           // Webhook URL
           const FEEDBACK_URL = 'https://tasks.nukeador.com/webhook/vallabus-guia-feedback';
           // Manita arriba
-          if (thumbsUpBtn) thumbsUpBtn.addEventListener('click', async function(e) {
+          if (thumbsUpBtn) thumbsUpBtn.addEventListener('click', async function (e) {
             e.preventDefault();
             e.stopPropagation();
             thumbsUpBtn.disabled = true;
@@ -727,15 +727,15 @@ function mainVallaBus() {
               })
             });
           });
-          if (thumbsDownBtn) thumbsDownBtn.addEventListener('click', function(e) {
+          if (thumbsDownBtn) thumbsDownBtn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
             // Solo marcar como "seleccionado" si realmente se envía feedback
             // Mostrar modal feedback negativo
-            showNegativeFeedbackModal({respuesta: msgText, pregunta: userQuestion, thumbsDownBtn, thumbsUpBtn});
+            showNegativeFeedbackModal({ respuesta: msgText, pregunta: userQuestion, thumbsDownBtn, thumbsUpBtn });
           });
           // Modal feedback negativo
-          function showNegativeFeedbackModal({respuesta, pregunta, thumbsDownBtn, thumbsUpBtn}) {
+          function showNegativeFeedbackModal({ respuesta, pregunta, thumbsDownBtn, thumbsUpBtn }) {
             // Si ya existe, no crear otro
             if (document.getElementById('feedbackModal')) return;
             const modal = document.createElement('div');
@@ -784,7 +784,7 @@ function mainVallaBus() {
               thumbsDownBtn.querySelector('i').classList.add('fa-regular');
             };
             // Enviar
-            document.getElementById('feedbackForm').onsubmit = async function(ev) {
+            document.getElementById('feedbackForm').onsubmit = async function (ev) {
               ev.preventDefault();
               const form = ev.target;
               const comentario = form.comentario.value.trim();
@@ -840,7 +840,7 @@ function mainVallaBus() {
       const info = document.getElementById('info');
       const loader = document.getElementById('loader');
       const stopBtn = document.getElementById('stopBtn');
-      
+
       if (isSpeaking) {
         info.classList.add('hidden');
         loader.classList.add('hidden');
@@ -855,7 +855,7 @@ function mainVallaBus() {
 
     // Modificar addMessage para actualizar el placeholder
     const originalAddMessage = addMessage;
-    window.addMessage = function(text, sender) {
+    window.addMessage = function (text, sender) {
       originalAddMessage(text, sender);
       updatePlaceholder();
       // LECTURA AUTOMÁTICA TRAS TAP MIC (solo si altavoz activo y flag activado)
@@ -864,10 +864,10 @@ function mainVallaBus() {
         speakLongText(text);
       }
     };
-    
+
     // Llamar al cargar
     updatePlaceholder();
-    
+
     // Detener el audio cuando se presiona el botón de detener
     document.getElementById('stopBtn').addEventListener('click', () => {
       speakLongTextCancelado = true;
@@ -890,7 +890,7 @@ function mainVallaBus() {
         icon.className = 'fa-solid fa-volume-xmark';
       }
     }
-    speakerBtn.addEventListener('click', function(e) {
+    speakerBtn.addEventListener('click', function (e) {
       e.preventDefault();
       speakerActive = !speakerActive;
       // Guardar preferencia en localStorage
@@ -935,7 +935,7 @@ function mainVallaBus() {
 
     // Delegar el click del botón de reinicio
     // (como los mensajes se agregan dinámicamente)
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
       if (e.target && e.target.id === 'restartBtn') {
         // Al reiniciar, mostrar de nuevo los controles
         const micBtn = document.getElementById('micBtn');
@@ -949,7 +949,7 @@ function mainVallaBus() {
     });
 
     // --- Utilidad para procesar enlaces y limpiar saltos de línea ---
-    function procesarRespuestaConEnlaces(respuesta, {paraVoz = false} = {}) {
+    function procesarRespuestaConEnlaces(respuesta, { paraVoz = false } = {}) {
       const urlRegex = /(https?:\/\/[\S]+)/g;
       const emojiRegex = /([\u203C-\u3299\uD83C-\uDBFF][\uDC00-\uDFFF]?)/g;
       // Limpia saltos de línea antes y después de enlaces a rutas.vallabus.com
@@ -960,7 +960,7 @@ function mainVallaBus() {
             // Elimina \n justo antes y después del enlace
             texto = texto.replace(new RegExp(`\\n*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n*`, 'g'), url);
           }
-        } catch {}
+        } catch { }
         return url;
       });
       if (paraVoz) {
@@ -988,15 +988,15 @@ function mainVallaBus() {
     }
 
     // --- Centraliza el procesamiento de la respuesta del bot ---
-    function handleBotResponse(data, {originalPregunta = null, infoRef = null, textInputFormRef = null} = {}) {
+    function handleBotResponse(data, { originalPregunta = null, infoRef = null, textInputFormRef = null } = {}) {
       removeThinkingPlaceholder();
       document.getElementById('loader').style.display = 'none';
       esperandoRespuestaBot = false; // Permitir nuevos envíos
-      
+
       // Verificar si el botón de login está visible
       const loginBtn = document.getElementById('main-login-btn');
       const isLoginVisible = loginBtn && loginBtn.style.display !== 'none';
-      
+
       if (!isLoginVisible) {
         // Solo habilitar controles si el usuario está autenticado
         setControlesUsuarioActivos(true);
@@ -1005,7 +1005,7 @@ function mainVallaBus() {
         window.mostrarSoloLogin && window.mostrarSoloLogin();
         return;
       }
-      
+
       if (!isLoginVisible) {
         // Solo habilitar controles si el usuario está autenticado
         setControlesUsuarioActivos(true);
@@ -1014,7 +1014,7 @@ function mainVallaBus() {
         window.mostrarSoloLogin && window.mostrarSoloLogin();
         return;
       }
-      
+
       if (textInputFormRef && textInputFormRef.style.display === 'none' && infoRef) infoRef.style.display = '';
       let respuesta = data.output || getErrorWithRestartButton();
       let respuestaParaVoz, respuestaConEnlaces;
@@ -1022,7 +1022,7 @@ function mainVallaBus() {
         respuestaParaVoz = getErrorWithRestartButton.voice;
         respuestaConEnlaces = respuesta;
       } else {
-        respuestaParaVoz = procesarRespuestaConEnlaces(respuesta, {paraVoz: true});
+        respuestaParaVoz = procesarRespuestaConEnlaces(respuesta, { paraVoz: true });
         respuestaConEnlaces = procesarRespuestaConEnlaces(respuesta);
       }
       addMessage(respuestaConEnlaces, 'bot', respuesta);
@@ -1090,7 +1090,7 @@ function mainVallaBus() {
       linkIds.forEach(id => {
         const link = document.getElementById(id);
         if (link) {
-          link.addEventListener('click', function(e) {
+          link.addEventListener('click', function (e) {
             e.preventDefault();
             if (acceptModal) acceptModal.style.display = 'none';
             abrirModal();
@@ -1098,7 +1098,7 @@ function mainVallaBus() {
         }
       });
       // Cierre por botón
-      closeBtn.addEventListener('click', function() {
+      closeBtn.addEventListener('click', function () {
         modal.classList.add('hidden');
         modal.style.display = 'none';
         // Si no se ha aceptado la privacidad y hay acceptModal, volver a mostrarlo
@@ -1107,7 +1107,7 @@ function mainVallaBus() {
         }
       });
       // Cierre por click fuera del contenido
-      modal.addEventListener('click', function(e) {
+      modal.addEventListener('click', function (e) {
         if (e.target === modal) {
           modal.classList.add('hidden');
           modal.style.display = 'none';
@@ -1161,7 +1161,7 @@ function mainVallaBus() {
     checkAndShowPrivacyModal();
     setInterval(checkAndShowPrivacyModal, 1000);
     if (acceptBtn) {
-      acceptBtn.addEventListener('click', function() {
+      acceptBtn.addEventListener('click', function () {
         localStorage.setItem('privacyAccepted', 'true');
         acceptModal.style.display = 'none';
         document.body.style.overflow = '';
@@ -1176,7 +1176,7 @@ function mainVallaBus() {
         const remaining = maxChars - textInput.value.length;
         if (charCounter) charCounter.textContent = remaining;
       }
-      textInput.addEventListener('input', function() {
+      textInput.addEventListener('input', function () {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
         if (this.value.length > maxChars) {
@@ -1191,7 +1191,7 @@ function mainVallaBus() {
     }
 
     // Validar límite de caracteres al enviar
-    textInputForm.addEventListener('submit', async function(e) {
+    textInputForm.addEventListener('submit', async function (e) {
       if (textInput && textInput.value.length > 500) {
         e.preventDefault();
         textInput.value = textInput.value.slice(0, 500);
@@ -1234,7 +1234,7 @@ function mainVallaBus() {
 
     // Registrar el service worker para PWA
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
+      window.addEventListener('load', function () {
         navigator.serviceWorker.register('/service-worker.js');
       });
     }
@@ -1279,7 +1279,7 @@ function mainVallaBus() {
     });
 
     // Ocultar el botón de invitación si el usuario está logeado
-    document.addEventListener('DOMContentLoaded', async function() {
+    document.addEventListener('DOMContentLoaded', async function () {
       if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
         const isAuthenticated = await window.auth0Client.isAuthenticated();
         const inviteBtn = document.getElementById('inviteBtn');
@@ -1298,7 +1298,7 @@ function mainVallaBus() {
     });
 
     // Mostrar/ocultar placeholder e invitación solo cuando Auth0 esté listo
-    window.addEventListener('DOMContentLoaded', function() {
+    window.addEventListener('DOMContentLoaded', function () {
       function showPlaceholderAndInvite(isAuthenticated) {
         var placeholder = document.getElementById('placeholderVallaBus');
         var inviteBtn = document.getElementById('inviteBtn');
@@ -1311,7 +1311,7 @@ function mainVallaBus() {
         });
       } else {
         // Esperar a que auth0Client esté listo
-        const checkAuth = setInterval(function() {
+        const checkAuth = setInterval(function () {
           if (window.auth0Client && typeof window.auth0Client.isAuthenticated === 'function') {
             clearInterval(checkAuth);
             window.auth0Client.isAuthenticated().then(isAuthenticated => {

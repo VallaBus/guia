@@ -1,151 +1,217 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.auth0.com https://cdnjs.cloudflare.com https://stats.vallabus.com 'unsafe-inline'; script-src-elem 'self' https://cdn.tailwindcss.com https://cdn.auth0.com https://cdnjs.cloudflare.com https://stats.vallabus.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://vallabus.eu.auth0.com https://tasks.nukeador.com https://stats.vallabus.com; frame-src 'self' https://vallabus.eu.auth0.com/; object-src 'none'; base-uri 'self'; form-action 'self';">
-    <link rel="icon" type="image/png" href="/img/sparkles.png" />
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#434f48">
-    <meta name="theme-color" content="#434f48" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#212d26" media="(prefers-color-scheme: dark)">
-    <meta property="og:title" content="Guía VallaBus - Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid">
-    <meta property="og:description" content="Asistente conversacional para paradas, horarios y rutas de bus en Valladolid. ¡Pregunta lo que quieras!">
-    <meta property="og:image" content="https://guia.vallabus.com/img/guia-vallabus-logo.png">
-    <meta property="og:url" content="https://guia.vallabus.com/">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Guía VallaBus - Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid">
-    <meta name="twitter:description" content="Asistente conversacional para paradas, horarios y rutas de bus en Valladolid. ¡Pregunta lo que quieras!">
-    <meta name="twitter:image" content="https://guia.vallabus.com/img/guia-vallabus-logo.png">
-    <title>Guía VallaBus - Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      @import "./css/style.css?202509071411";
-    </style>
-  </head>
-  <body class="bg-[#5f7262] dark:bg-[#1a2320] text-[#1e4636] dark:text-[#eaf7ef] min-h-screen flex flex-col justify-between font-sans" style="background: linear-gradient(135deg, #5f7262 60%, #34453a 100%); background-repeat: no-repeat; background-attachment: fixed;">
-    <!-- Encabezado fijo -->
-    <header class="sticky top-0 left-0 right-0 z-50 bg-[#434f48] dark:bg-[#212d26] text-white py-3 shadow-md cursor-pointer flex items-center justify-center relative" onclick="document.getElementById('chatContainer').scrollTo({top: 0, behavior: 'smooth'})">
-      <h1 class="text-xl font-bold text-center text-[#eaf7ef] dark:text-[#b7e4c7] w-full">VallaBus</h1>
-      <button id="menuBtn" class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full p-2 bg-transparent hover:bg-[#5f7262]/30 focus:outline-none focus:ring-2 focus:ring-[#799385] text-2xl z-50 text-[#eaf7ef] dark:text-[#b7e4c7]" title="Abrir menú" type="button">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-    </header>
-    
-    <!-- Sidebar y overlay -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-[100] transition-opacity duration-300 opacity-0 pointer-events-none"></div>
-    <aside id="sidebarMenu" class="fixed top-0 right-0 h-full w-64 max-w-[80vw] bg-[#434f48] dark:bg-[#212d26] text-[#eaf7ef] dark:text-[#b7e4c7] shadow-lg z-[101] transform translate-x-full transition-transform duration-300 flex flex-col">
-      <button id="closeSidebarBtn" class="self-end m-4 text-2xl text-[#eaf7ef] dark:text-[#b7e4c7] hover:text-[#228b54] focus:outline-none" title="Cerrar menú">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-      <nav class="flex-1 flex flex-col items-start pt-4 gap-2 px-2">
-        <div id="userInfo" class="px-6 py-2 w-full text-base text-[#b7e4c7] dark:text-[#b7e4c7]" style="display:none; position:relative;"></div>
-        <button id="btn-login" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline bg-transparent border-none text-left cursor-pointer"><i class="fa-solid fa-right-to-bracket"></i> Inicia sesión o regístrate</button>
-        <!-- El botón de logout ahora va dentro del desplegable -->
-        <a href="https://vallabus.com" target="_blank" rel="noopener" class="text-lg font-semibold text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline flex items-center gap-2 px-6 py-2 w-full">
-          <i class="fa-solid fa-bus"></i> Volver a VallaBus
-        </a>
-        <a href="https://t.me/vallabusapp/4649" id="feedbackButton" target="_blank" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
-          <i class="fa-regular fa-comment-dots"></i> Danos tu opinión
-        </a>
-        <a href="https://vallabus.com/#/cercanas" id="nearestStopsButton" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
-          <i class="fa-solid fa-location-dot"></i> Paradas cercanas
-        </a>
-        <a href="https://vallabus.com/#/rutas" id="routesButton" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
-          <i class="fa-solid fa-route"></i> Planifica tu ruta
-        </a>
-        <a href="https://vallabus.com/#/lineas" id="viewLinesButton" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
-          <i class="fa-solid fa-list"></i> Ver todas las líneas
-        </a>
-        <a href="https://vallabus.com/informes/" id="informesButton" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
-          <i class="fa-solid fa-file-lines"></i> Informes de calidad
-        </a>
-        <a href="https://t.me/vallabusapp" id="communityButton" target="_blank" class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
-          <i class="fa-brands fa-telegram"></i> Comunidad
-        </a>
-      </nav>
-      <div class="mt-auto w-full px-6 pb-6">
-        <a href="#" id="privacyLink" class="text-xs text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline block text-center">Privacidad</a>
-        <a href="#" id="termsLink" class="text-xs text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline block text-center mt-1">Términos de uso</a>
-      </div>
-    </aside>
-    
-    <div class="relative flex-1 w-full max-w-md mx-auto px-2 overflow-y-auto space-y-2 pt-16" id="chatContainer">
-      <div id="placeholderVallaBus" class="placeholder-vallabus text-white dark:text-white text-base font-bold" style="display:none;">
-        <p class="text-white dark:text-white text-4xl">¡Hola! <br> <span class="text-3xl">Pregúntame sobre paradas, horarios o cómo llegar a un destino</span></p>
-        <p class="text-white/70 dark:text-white/60 text-sm mt-8 font-normal">Nota: Servicio en pruebas limitado mientras medimos su viabilidad.</p>
-        <a href="https://blog.vallabus.com/guia-vallabus-tu-nuevo-asistente-conversacional-para-el-transporte-en-valladolid/" target="_blank" rel="noopener" class="inline-block mt-6 px-4 py-2 rounded-lg bg-[#b0b6b2] dark:bg-[#444b48] text-[#434f48] dark:text-[#e0e2e0] text-base font-semibold shadow hover:bg-[#c7cbc9] dark:hover:bg-[#555b58] transition focus:outline-none focus:ring-2 focus:ring-[#b0b6b2]">Más detalles y demo</a>
-        <!--<a id="inviteBtn" href="https://proyectos.aldeapucela.org/dashboard/#/nc/form/a8030fd7-ec27-4d5b-8e16-7d1145ef2871" target="_blank" rel="noopener" class="inline-block mt-6 px-4 py-2 rounded-lg bg-[#434f48] dark:bg-[#23382b] text-[#eaf7ef] dark:text-[#b7e4c7] text-base font-semibold shadow hover:bg-[#5f7262] dark:hover:bg-[#355347] transition focus:outline-none focus:ring-2 focus:ring-[#799385]" style="display:none;">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.auth0.com https://cdnjs.cloudflare.com https://stats.vallabus.com 'unsafe-inline'; script-src-elem 'self' https://cdn.tailwindcss.com https://cdn.auth0.com https://cdnjs.cloudflare.com https://stats.vallabus.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://vallabus.eu.auth0.com https://tasks.nukeador.com https://stats.vallabus.com; frame-src 'self' https://vallabus.eu.auth0.com/; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <link rel="icon" type="image/png" href="/img/sparkles.png" />
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#434f48">
+  <meta name="theme-color" content="#434f48" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#212d26" media="(prefers-color-scheme: dark)">
+  <meta property="og:title"
+    content="Guía VallaBus - Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid">
+  <meta property="og:description"
+    content="Asistente conversacional para paradas, horarios y rutas de bus en Valladolid. ¡Pregunta lo que quieras!">
+  <meta property="og:image" content="https://guia.vallabus.com/img/guia-vallabus-logo.png">
+  <meta property="og:url" content="https://guia.vallabus.com/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title"
+    content="Guía VallaBus - Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid">
+  <meta name="twitter:description"
+    content="Asistente conversacional para paradas, horarios y rutas de bus en Valladolid. ¡Pregunta lo que quieras!">
+  <meta name="twitter:image" content="https://guia.vallabus.com/img/guia-vallabus-logo.png">
+  <title>Guía VallaBus - Responde preguntas sobre paradas, horarios y rutas en bus en Valladolid</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import "./css/style.css?202509071411";
+  </style>
+</head>
+
+<body
+  class="bg-[#5f7262] dark:bg-[#1a2320] text-[#1e4636] dark:text-[#eaf7ef] min-h-screen flex flex-col justify-between font-sans"
+  style="background: linear-gradient(135deg, #5f7262 60%, #34453a 100%); background-repeat: no-repeat; background-attachment: fixed;">
+  <a id="back-to-vallabus" href="https://vallabus.com/" aria-label="Volver a VallaBus" class="btn-back">
+    <i class="fa-solid fa-arrow-left"></i>
+  </a>
+  <!-- Encabezado fijo -->
+  <header
+    class="sticky top-0 left-0 right-0 z-50 bg-[#434f48] dark:bg-[#212d26] text-white py-3 shadow-md cursor-pointer flex items-center justify-center relative"
+    onclick="document.getElementById('chatContainer').scrollTo({top: 0, behavior: 'smooth'})">
+    <h1 class="text-xl font-bold text-center text-[#eaf7ef] dark:text-[#b7e4c7] w-full">VallaBus</h1>
+    <button id="menuBtn"
+      class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full p-2 bg-transparent hover:bg-[#5f7262]/30 focus:outline-none focus:ring-2 focus:ring-[#799385] text-2xl z-50 text-[#eaf7ef] dark:text-[#b7e4c7]"
+      title="Abrir menú" type="button">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </header>
+
+  <!-- Sidebar y overlay -->
+  <div id="sidebarOverlay"
+    class="fixed inset-0 bg-black/40 z-[100] transition-opacity duration-300 opacity-0 pointer-events-none"></div>
+  <aside id="sidebarMenu"
+    class="fixed top-0 right-0 h-full w-64 max-w-[80vw] bg-[#434f48] dark:bg-[#212d26] text-[#eaf7ef] dark:text-[#b7e4c7] shadow-lg z-[101] transform translate-x-full transition-transform duration-300 flex flex-col">
+    <button id="closeSidebarBtn"
+      class="self-end m-4 text-2xl text-[#eaf7ef] dark:text-[#b7e4c7] hover:text-[#228b54] focus:outline-none"
+      title="Cerrar menú">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <nav class="flex-1 flex flex-col items-start pt-4 gap-2 px-2">
+      <div id="userInfo" class="px-6 py-2 w-full text-base text-[#b7e4c7] dark:text-[#b7e4c7]"
+        style="display:none; position:relative;"></div>
+      <button id="btn-login"
+        class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline bg-transparent border-none text-left cursor-pointer"><i
+          class="fa-solid fa-right-to-bracket"></i> Inicia sesión o regístrate</button>
+      <!-- El botón de logout ahora va dentro del desplegable -->
+      <a href="https://vallabus.com" target="_blank" rel="noopener"
+        class="text-lg font-semibold text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline flex items-center gap-2 px-6 py-2 w-full">
+        <i class="fa-solid fa-bus"></i> Volver a VallaBus
+      </a>
+      <a href="https://t.me/vallabusapp/4649" id="feedbackButton" target="_blank"
+        class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+        <i class="fa-regular fa-comment-dots"></i> Danos tu opinión
+      </a>
+      <a href="https://vallabus.com/#/cercanas" id="nearestStopsButton"
+        class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+        <i class="fa-solid fa-location-dot"></i> Paradas cercanas
+      </a>
+      <a href="https://vallabus.com/#/rutas" id="routesButton"
+        class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+        <i class="fa-solid fa-route"></i> Planifica tu ruta
+      </a>
+      <a href="https://vallabus.com/#/lineas" id="viewLinesButton"
+        class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+        <i class="fa-solid fa-list"></i> Ver todas las líneas
+      </a>
+      <a href="https://vallabus.com/informes/" id="informesButton"
+        class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+        <i class="fa-solid fa-file-lines"></i> Informes de calidad
+      </a>
+      <a href="https://t.me/vallabusapp" id="communityButton" target="_blank"
+        class="text-base flex items-center gap-2 px-6 py-2 w-full hover:underline">
+        <i class="fa-brands fa-telegram"></i> Comunidad
+      </a>
+    </nav>
+    <div class="mt-auto w-full px-6 pb-6">
+      <a href="#" id="privacyLink"
+        class="text-xs text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline block text-center">Privacidad</a>
+      <a href="#" id="termsLink"
+        class="text-xs text-[#b7e4c7] dark:text-[#b7e4c7] hover:underline block text-center mt-1">Términos de uso</a>
+    </div>
+  </aside>
+
+  <div class="relative flex-1 w-full max-w-md mx-auto px-2 overflow-y-auto space-y-2 pt-16" id="chatContainer">
+    <div id="placeholderVallaBus" class="placeholder-vallabus text-white dark:text-white text-base font-bold"
+      style="display:none;">
+      <p class="text-white dark:text-white text-4xl">¡Hola! <br> <span class="text-3xl">Pregúntame sobre paradas,
+          horarios o cómo llegar a un destino</span></p>
+      <p class="text-white/70 dark:text-white/60 text-sm mt-8 font-normal">Nota: Servicio en pruebas limitado mientras
+        medimos su viabilidad.</p>
+      <a href="https://blog.vallabus.com/guia-vallabus-tu-nuevo-asistente-conversacional-para-el-transporte-en-valladolid/"
+        target="_blank" rel="noopener"
+        class="inline-block mt-6 px-4 py-2 rounded-lg bg-[#b0b6b2] dark:bg-[#444b48] text-[#434f48] dark:text-[#e0e2e0] text-base font-semibold shadow hover:bg-[#c7cbc9] dark:hover:bg-[#555b58] transition focus:outline-none focus:ring-2 focus:ring-[#b0b6b2]">Más
+        detalles y demo</a>
+      <!--<a id="inviteBtn" href="https://proyectos.aldeapucela.org/dashboard/#/nc/form/a8030fd7-ec27-4d5b-8e16-7d1145ef2871" target="_blank" rel="noopener" class="inline-block mt-6 px-4 py-2 rounded-lg bg-[#434f48] dark:bg-[#23382b] text-[#eaf7ef] dark:text-[#b7e4c7] text-base font-semibold shadow hover:bg-[#5f7262] dark:hover:bg-[#355347] transition focus:outline-none focus:ring-2 focus:ring-[#799385]" style="display:none;">
           Pide una invitación aquí
         </a>-->
-      </div>
-      <!-- Los mensajes se irán agregando aquí dinámicamente -->
     </div>
-    <!-- Micrófono superpuesto -->
-    <div class="mic-btn-container w-full max-w-md flex justify-center pointer-events-none fixed left-1/2 bottom-14 translate-x-[-50%] z-30">
-      <div class="relative w-full flex justify-center items-center">
-        <button id="speakerBtn" title="Leer respuestas en alto" class="absolute left-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#eaf7ef] text-[#434f48] border-2 border-[#698374] dark:bg-[#355347] dark:text-[#b7e4c7] dark:border-[#23382b] p-2 text-lg">
-          <i id="speakerIcon" class="fa-solid fa-volume-up"></i>
-        </button>
-        <button id="micBtn" title="Hablar o parar" class="relative flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#434f48] text-white border-4 border-[#698374] dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347]">
-          <span id="micIcon"><i class="fa-solid fa-microphone"></i></span>
-        </button>
-        <button id="keyboardBtn" title="Modo texto" class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#eaf7ef] text-[#434f48] border-2 border-[#698374] dark:bg-[#355347] dark:text-[#b7e4c7] dark:border-[#23382b] p-2 text-lg">
-          <i class="fa-solid fa-keyboard"></i>
-        </button>
-      </div>
-    </div>
-    <!-- Barra inferior fija con info -->
-    <div class="fixed-bottom-bar bg-white border-t-[1.5px] border-[#d1f2e0] dark:bg-[#1c2623] dark:border-t-[#355347] dark:shadow-[0_-2px_24px_#0008] min-h-[88px] flex items-center justify-center">
-  <div id="info" class="text-[#4e8c6c] dark:text-[#b7e4c7] text-base text-center font-medium">Pulsa para hablar</div>
-  <form id="textInputForm" class="text-input-bar flex items-center w-full h-full gap-2" style="display:none;">
-    <div class="relative flex-1 h-full flex flex-col justify-end">
-      <textarea id="textInput" autocomplete="off" placeholder="Pregunta lo que quieras" rows="1" maxlength="500" class="flex-1 h-full rounded-lg border-none px-4 py-3 text-xl bg-transparent focus:outline-none focus:ring-0 resize-none overflow-y-auto touch-auto vallabus-textarea"></textarea>
-      <div id="charCounter" class="absolute bottom-1 right-3 text-xs text-[#228b54] dark:text-[#7be495] opacity-70 select-none pointer-events-none">500</div>
-    </div>
-    <button type="submit" class="rounded-full bg-[#434f48] text-white border-4 border-[#698374] dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347] flex items-center justify-center shadow transition w-12 h-12 p-0"><i class="fa-solid fa-arrow-right fa-lg"></i></button>
-  </form>
-  <div class="loader absolute left-0 right-0 flex flex-col items-center justify-center hidden" id="loader">
-    <span class="text-[#4e8c6c] dark:text-[#b7e4c7] text-base font-semibold">Pensando...</span>
+    <!-- Los mensajes se irán agregando aquí dinámicamente -->
   </div>
-  <button id="stopBtn" class="rounded-lg bg-[#b7e4c7] dark:bg-[#23382b] text-[#228b54] dark:text-[#b7e4c7] font-semibold py-2 px-4 shadow transition hidden">Detener audio</button>
-</div>
-    <!-- Modal de privacidad -->
-    <div id="privacyModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/60" style="display: none;">
-      <div class="bg-white dark:bg-[#212d26] rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
-        <button id="closePrivacyModal" class="absolute top-3 right-3 text-2xl text-[#434f48] dark:text-[#b7e4c7] hover:text-[#228b54] focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
-        <div id="privacyContent" class="prose dark:prose-invert max-w-none"></div>
-      </div>
+  <!-- Micrófono superpuesto -->
+  <div
+    class="mic-btn-container w-full max-w-md flex justify-center pointer-events-none fixed left-1/2 bottom-14 translate-x-[-50%] z-30">
+    <div class="relative w-full flex justify-center items-center">
+      <button id="speakerBtn" title="Leer respuestas en alto"
+        class="absolute left-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#eaf7ef] text-[#434f48] border-2 border-[#698374] dark:bg-[#355347] dark:text-[#b7e4c7] dark:border-[#23382b] p-2 text-lg">
+        <i id="speakerIcon" class="fa-solid fa-volume-up"></i>
+      </button>
+      <button id="micBtn" title="Hablar o parar"
+        class="relative flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#434f48] text-white border-4 border-[#698374] dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347]">
+        <span id="micIcon"><i class="fa-solid fa-microphone"></i></span>
+      </button>
+      <button id="keyboardBtn" title="Modo texto"
+        class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full shadow-md transition-all outline-none focus:ring-2 focus:ring-[#799385] pointer-events-auto bg-[#eaf7ef] text-[#434f48] border-2 border-[#698374] dark:bg-[#355347] dark:text-[#b7e4c7] dark:border-[#23382b] p-2 text-lg">
+        <i class="fa-solid fa-keyboard"></i>
+      </button>
     </div>
-    <!-- Modal de términos de uso -->
-    <div id="termsModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/60" style="display: none;">
-      <div class="bg-white dark:bg-[#212d26] rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
-        <button id="closeTermsModal" class="absolute top-3 right-3 text-2xl text-[#434f48] dark:text-[#b7e4c7] hover:text-[#228b54] focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
-        <div id="termsContent" class="prose dark:prose-invert max-w-none"></div>
-      </div>
-    </div>
-    <!-- Modal de aceptación de la política de privacidad -->
-<div id="privacyAcceptModal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/70" style="display:none;">
-  <div class="bg-white dark:bg-[#212d26] rounded-lg shadow-lg max-w-md w-full p-6 flex flex-col items-center relative">
-    <h2 class="text-xl font-semibold mb-4 text-[#228b54] dark:text-[#b7e4c7]">Información importante</h2>
-    <p class="mb-4 text-center text-[#434f48] dark:text-[#b7e4c7]">
-      Para continuar usando la aplicación, debes aceptar nuestra <a href="#" id="openPrivacyModal" class="underline text-[#228b54] dark:text-[#b7e4c7] hover:text-[#145c37] pointer-events-auto" tabindex="0">Política de privacidad</a> y nuestros <a href="#" id="openTermsModal" class="underline text-[#228b54] dark:text-[#b7e4c7] hover:text-[#145c37] pointer-events-auto" tabindex="0">Términos de uso</a>.
-    </p>
-    <button id="acceptPrivacyBtn" class="bg-[#228b54] hover:bg-[#145c37] text-white font-bold py-2 px-6 rounded focus:outline-none focus:ring-2 focus:ring-[#228b54] focus:ring-opacity-50 transition">Aceptar</button>
   </div>
-</div>
-<!-- Fin modal de aceptación de la política de privacidad -->
+  <!-- Barra inferior fija con info -->
+  <div
+    class="fixed-bottom-bar bg-white border-t-[1.5px] border-[#d1f2e0] dark:bg-[#1c2623] dark:border-t-[#355347] dark:shadow-[0_-2px_24px_#0008] min-h-[88px] flex items-center justify-center">
+    <div id="info" class="text-[#4e8c6c] dark:text-[#b7e4c7] text-base text-center font-medium">Pulsa para hablar</div>
+    <form id="textInputForm" class="text-input-bar flex items-center w-full h-full gap-2" style="display:none;">
+      <div class="relative flex-1 h-full flex flex-col justify-end">
+        <textarea id="textInput" autocomplete="off" placeholder="Pregunta lo que quieras" rows="1" maxlength="500"
+          class="flex-1 h-full rounded-lg border-none px-4 py-3 text-xl bg-transparent focus:outline-none focus:ring-0 resize-none overflow-y-auto touch-auto vallabus-textarea"></textarea>
+        <div id="charCounter"
+          class="absolute bottom-1 right-3 text-xs text-[#228b54] dark:text-[#7be495] opacity-70 select-none pointer-events-none">
+          500</div>
+      </div>
+      <button type="submit"
+        class="rounded-full bg-[#434f48] text-white border-4 border-[#698374] dark:bg-[#3b5648] dark:text-[#b7e4c7] dark:border-[#355347] flex items-center justify-center shadow transition w-12 h-12 p-0"><i
+          class="fa-solid fa-arrow-right fa-lg"></i></button>
+    </form>
+    <div class="loader absolute left-0 right-0 flex flex-col items-center justify-center hidden" id="loader">
+      <span class="text-[#4e8c6c] dark:text-[#b7e4c7] text-base font-semibold">Pensando...</span>
+    </div>
+    <button id="stopBtn"
+      class="rounded-lg bg-[#b7e4c7] dark:bg-[#23382b] text-[#228b54] dark:text-[#b7e4c7] font-semibold py-2 px-4 shadow transition hidden">Detener
+      audio</button>
+  </div>
+  <!-- Modal de privacidad -->
+  <div id="privacyModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/60"
+    style="display: none;">
+    <div
+      class="bg-white dark:bg-[#212d26] rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
+      <button id="closePrivacyModal"
+        class="absolute top-3 right-3 text-2xl text-[#434f48] dark:text-[#b7e4c7] hover:text-[#228b54] focus:outline-none"><i
+          class="fa-solid fa-xmark"></i></button>
+      <div id="privacyContent" class="prose dark:prose-invert max-w-none"></div>
+    </div>
+  </div>
+  <!-- Modal de términos de uso -->
+  <div id="termsModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/60"
+    style="display: none;">
+    <div
+      class="bg-white dark:bg-[#212d26] rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
+      <button id="closeTermsModal"
+        class="absolute top-3 right-3 text-2xl text-[#434f48] dark:text-[#b7e4c7] hover:text-[#228b54] focus:outline-none"><i
+          class="fa-solid fa-xmark"></i></button>
+      <div id="termsContent" class="prose dark:prose-invert max-w-none"></div>
+    </div>
+  </div>
+  <!-- Modal de aceptación de la política de privacidad -->
+  <div id="privacyAcceptModal" class="fixed inset-0 z-[300] flex items-center justify-center bg-black/70"
+    style="display:none;">
+    <div
+      class="bg-white dark:bg-[#212d26] rounded-lg shadow-lg max-w-md w-full p-6 flex flex-col items-center relative">
+      <h2 class="text-xl font-semibold mb-4 text-[#228b54] dark:text-[#b7e4c7]">Información importante</h2>
+      <p class="mb-4 text-center text-[#434f48] dark:text-[#b7e4c7]">
+        Para continuar usando la aplicación, debes aceptar nuestra <a href="#" id="openPrivacyModal"
+          class="underline text-[#228b54] dark:text-[#b7e4c7] hover:text-[#145c37] pointer-events-auto"
+          tabindex="0">Política de privacidad</a> y nuestros <a href="#" id="openTermsModal"
+          class="underline text-[#228b54] dark:text-[#b7e4c7] hover:text-[#145c37] pointer-events-auto"
+          tabindex="0">Términos de uso</a>.
+      </p>
+      <button id="acceptPrivacyBtn"
+        class="bg-[#228b54] hover:bg-[#145c37] text-white font-bold py-2 px-6 rounded focus:outline-none focus:ring-2 focus:ring-[#228b54] focus:ring-opacity-50 transition">Aceptar</button>
+    </div>
+  </div>
+  <!-- Fin modal de aceptación de la política de privacidad -->
 
 </body>
-    <script src="js/social-detect.js"></script>
-    <script src="js/marked.min.js"></script>
-    <script src="js/configure-marked.js"></script>
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-    <script src="js/auth.js?202509071411"></script>
-    <script src="js/ubicacion.js"></script>
-    <script src="js/main.js?202509071411"></script>
-    <script src="js/matomo.js"></script>
+<script src="js/social-detect.js"></script>
+<script src="js/marked.min.js"></script>
+<script src="js/configure-marked.js"></script>
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<script src="js/auth.js?202509071411"></script>
+<script src="js/ubicacion.js"></script>
+<script src="js/main.js?202509071411"></script>
+<script src="js/matomo.js"></script>
 </body>
+
 </html>

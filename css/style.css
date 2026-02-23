@@ -13,256 +13,320 @@ header h1 {
 }
 
 @media (prefers-color-scheme: dark) {
-    body {
-      background: linear-gradient(135deg, #1a2320 60%, #121814 100%) !important;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-    }
+  body {
+    background: linear-gradient(135deg, #1a2320 60%, #121814 100%) !important;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
-  #micBtn.recording {
-    animation: pulse 1.2s infinite;
-    /* Más iluminado y con resplandor */
-    box-shadow: 0 0 0 10px #aaffcc, 0 0 32px 12px #aaffcc99;
-  }
-  #micBtn::after {
-    content: '';
-    display: block;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 120px;
-    height: 120px;
-    background: radial-gradient(circle, #b7e4c722 0%, transparent 80%);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.5;
-    transition: opacity 0.3s;
-  }
-  #micBtn.recording::after {
-    animation: mic-wave 1.2s infinite;
-    opacity: 0.95;
-    filter: brightness(2) drop-shadow(0 0 24px #aaffcc);
-  }
-  @keyframes mic-wave {
-    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: brightness(2); background: radial-gradient(circle, #aaffcc 0%, transparent 80%); }
-    70% { opacity: 0.22; transform: translate(-50%, -50%) scale(1.28); filter: brightness(1.3); background: radial-gradient(circle, #aaffcc88 0%, transparent 90%); }
-    100% { opacity: 0.0; transform: translate(-50%, -50%) scale(1.45); filter: brightness(1); background: radial-gradient(circle, #aaffcc00 0%, transparent 100%); }
-  }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 #b7e4c733; }
-    70% { box-shadow: 0 0 0 12px #b7e4c700; }
-    100% { box-shadow: 0 0 0 0 #b7e4c700; }
-  }
-  #chatContainer {
-    position: relative;
-    z-index: 1;
-    min-height: 320px;
-    background: transparent;
-    overflow-y: auto;
-    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0)); /* Más espacio para el micrófono y barra inferior */
-    scroll-behavior: smooth; /* Desplazamiento suave */
-  }
-  .placeholder-vallabus {
-    position: absolute;
-    top: 15%;
-    left: 15%;
-    transform: translate(-15%, -15%);
-    text-align: left;
-    opacity: 0.80;
-    z-index: 2;
-  }
-  .placeholder-vallabus p {
-    line-height: 1.6;
-  }
-  /* Micrófono superpuesto y grande */
-  .mic-btn-container {
-    position: fixed;
-    left: 50%;
-    bottom: 96px;
-    transform: translate(-50%, 0);
-    z-index: 100 !important;
-    width: 100vw;
-    max-width: 100vw;
-    display: flex;
-    justify-content: center;
-    pointer-events: none;
-    /* El micBtn se queda centrado, el keyboardBtn va absolutamente a la derecha dentro del contenedor relativo */
-  }
-  .mic-btn-container .relative {
-    width: 340px;
-    max-width: 90vw;
-    margin: 0 auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-  }
-  #micBtn {
-    width: 110px;
-    height: 110px;
-    font-size: 3.2rem;
-    margin: 0 auto;
-    pointer-events: auto;
-    transition: box-shadow 0.2s;
-    z-index: 110;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #keyboardBtn {
-    position: absolute;
-    right: 0;
-    top: 70%;
-    transform: translateY(-50%);
-    width: 50px !important;
-    height: 50px !important;
-    font-size: 1.3rem !important;
-    min-width: 50px;
-    min-height: 50px;
-    margin: 0;
-    pointer-events: auto;
-    transition: box-shadow 0.2s;
-    z-index: 110 !important;
-  }
-  #keyboardBtn:active, #micBtn:active {
-    box-shadow: 0 0 0 2px #b7e4c7;
-  }
-  #speakerBtn {
-    position: absolute;
-    left: 0;
-    top: 70%;
-    transform: translateY(-50%);
-    width: 50px !important;
-    height: 50px !important;
-    min-width: 50px;
-    min-height: 50px;
-    margin: 0;
-    pointer-events: auto;
-    transition: box-shadow 0.2s, top 0.2s;
-    z-index: 110 !important;
-    font-size: 1.3rem !important;
-  }
-  body.text-mode-only #speakerBtn {
-    transform: translate(0%, -275%) !important;
-  }
-  body.text-mode-only #stopBtn {
-      display: none !important;
-  }
-body.text-mode-only .loader {
-      display: none !important;
-  }
-  .bottom-bar-vallabus {
-    padding-top: 60px !important;
-  }
-  /* Barra inferior fija */
-  .fixed-bottom-bar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 40;
-    width: 100vw;
-    max-width: 100vw;
-    background: #fff;
-    border-top: 1.5px solid #d1f2e0;
-    min-height: 88px; /* Aumentado para dar más espacio */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #fff;
-    padding: 10px 0;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0)); /* Soporte para dispositivos con muesca */
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-  }
-  #info {
-    margin: 0 12px;
-    padding: 8px 16px;
-    transition: all 0.3s ease;
+}
+
+#micBtn.recording {
+  animation: pulse 1.2s infinite;
+  /* Más iluminado y con resplandor */
+  box-shadow: 0 0 0 10px #aaffcc, 0 0 32px 12px #aaffcc99;
+}
+
+#micBtn::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, #b7e4c722 0%, transparent 80%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+#micBtn.recording::after {
+  animation: mic-wave 1.2s infinite;
+  opacity: 0.95;
+  filter: brightness(2) drop-shadow(0 0 24px #aaffcc);
+}
+
+@keyframes mic-wave {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(2);
+    background: radial-gradient(circle, #aaffcc 0%, transparent 80%);
   }
 
-  #textInputForm, .text-input-bar {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: transparent;
-    padding: 0 16px;
+  70% {
+    opacity: 0.22;
+    transform: translate(-50%, -50%) scale(1.28);
+    filter: brightness(1.3);
+    background: radial-gradient(circle, #aaffcc88 0%, transparent 90%);
   }
+
+  100% {
+    opacity: 0.0;
+    transform: translate(-50%, -50%) scale(1.45);
+    filter: brightness(1);
+    background: radial-gradient(circle, #aaffcc00 0%, transparent 100%);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 #b7e4c733;
+  }
+
+  70% {
+    box-shadow: 0 0 0 12px #b7e4c700;
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 #b7e4c700;
+  }
+}
+
+#chatContainer {
+  position: relative;
+  z-index: 1;
+  min-height: 320px;
+  background: transparent;
+  overflow-y: auto;
+  padding-bottom: calc(180px + env(safe-area-inset-bottom, 0));
+  /* Más espacio para el micrófono y barra inferior */
+  scroll-behavior: smooth;
+  /* Desplazamiento suave */
+}
+
+.placeholder-vallabus {
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  transform: translate(-15%, -15%);
+  text-align: left;
+  opacity: 0.80;
+  z-index: 2;
+}
+
+.placeholder-vallabus p {
+  line-height: 1.6;
+}
+
+/* Micrófono superpuesto y grande */
+.mic-btn-container {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  transform: translate(-50%, 0);
+  z-index: 100 !important;
+  width: 100vw;
+  max-width: 100vw;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  /* El micBtn se queda centrado, el keyboardBtn va absolutamente a la derecha dentro del contenedor relativo */
+}
+
+.mic-btn-container .relative {
+  width: 340px;
+  max-width: 90vw;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+#micBtn {
+  width: 110px;
+  height: 110px;
+  font-size: 3.2rem;
+  margin: 0 auto;
+  pointer-events: auto;
+  transition: box-shadow 0.2s;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#keyboardBtn {
+  position: absolute;
+  right: 0;
+  top: 70%;
+  transform: translateY(-50%);
+  width: 50px !important;
+  height: 50px !important;
+  font-size: 1.3rem !important;
+  min-width: 50px;
+  min-height: 50px;
+  margin: 0;
+  pointer-events: auto;
+  transition: box-shadow 0.2s;
+  z-index: 110 !important;
+}
+
+#keyboardBtn:active,
+#micBtn:active {
+  box-shadow: 0 0 0 2px #b7e4c7;
+}
+
+#speakerBtn {
+  position: absolute;
+  left: 0;
+  top: 70%;
+  transform: translateY(-50%);
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px;
+  min-height: 50px;
+  margin: 0;
+  pointer-events: auto;
+  transition: box-shadow 0.2s, top 0.2s;
+  z-index: 110 !important;
+  font-size: 1.3rem !important;
+}
+
+body.text-mode-only #speakerBtn {
+  transform: translate(0%, -275%) !important;
+}
+
+body.text-mode-only #stopBtn {
+  display: none !important;
+}
+
+body.text-mode-only .loader {
+  display: none !important;
+}
+
+.bottom-bar-vallabus {
+  padding-top: 60px !important;
+}
+
+/* Barra inferior fija */
+.fixed-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  width: 100vw;
+  max-width: 100vw;
+  background: #fff;
+  border-top: 1.5px solid #d1f2e0;
+  min-height: 88px;
+  /* Aumentado para dar más espacio */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  padding: 10px 0;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
+  /* Soporte para dispositivos con muesca */
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+#info {
+  margin: 0 12px;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+#textInputForm,
+.text-input-bar {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  padding: 0 16px;
+}
+
+#textInput {
+  flex: 1;
+  min-height: 48px;
+  max-height: 160px;
+  border-radius: 1.25rem;
+  border: none;
+  padding: 0 18px;
+  font-size: 1.1rem;
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.4;
+  transition: min-height 0.2s, max-height 0.2s;
+}
+
+#textInput::placeholder {
+  opacity: 1;
+  color: #667c72 !important;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.dark #textInput::placeholder {
+  color: #7be495 !important;
+  opacity: 1;
+}
+
+#textInput:focus::placeholder {
+  opacity: 1;
+  color: #667c72 !important;
+}
+
+#textInput:focus {
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+#textInputForm button[type="submit"],
+.text-input-bar button[type="submit"] {
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+@media (max-width: 600px) {
+
+  #textInputForm,
+  .text-input-bar {
+    max-width: 100vw;
+    gap: 4px;
+    padding: 0 6px;
+  }
+
   #textInput {
-    flex: 1;
-    min-height: 48px;
-    max-height: 160px;
-    border-radius: 1.25rem;
-    border: none;
-    padding: 0 18px;
-    font-size: 1.1rem;
-    background: transparent;
-    outline: none;
-    box-shadow: none;
-    resize: none;
-    overflow-y: auto;
-    line-height: 1.4;
-    transition: min-height 0.2s, max-height 0.2s;
+    padding: 0 10px;
+    min-height: 40px;
+    font-size: 1em;
   }
-  #textInput::placeholder {
-    opacity: 1;
-    color: #667c72 !important;
-    transition: opacity 0.2s, color 0.2s;
+
+  #textInputForm button[type="submit"],
+  .text-input-bar button[type="submit"] {
+    font-size: 1rem;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
   }
-  .dark #textInput::placeholder {
-    color: #7be495 !important;
-    opacity: 1;
-  }
-  #textInput:focus::placeholder {
-    opacity: 1;
-    color: #667c72 !important;
-  }
-  #textInput:focus {
-    background: transparent;
-    outline: none;
-    box-shadow: none;
-  }
-  #textInputForm button[type="submit"], .text-input-bar button[type="submit"] {
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    min-height: 48px;
-    padding: 0;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s, color 0.2s;
-  }
-  @media (max-width: 600px) {
-    #textInputForm, .text-input-bar {
-      max-width: 100vw;
-      gap: 4px;
-      padding: 0 6px;
-    }
-    #textInput {
-      padding: 0 10px;
-      min-height: 40px;
-      font-size: 1em;
-    }
-    #textInputForm button[type="submit"], .text-input-bar button[type="submit"] {
-      font-size: 1rem;
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      min-height: 40px;
-    }
-  }
-  
-  #stopBtn {
-    margin: 0 12px;
-    white-space: nowrap;
-  }
+}
+
+#stopBtn {
+  margin: 0 12px;
+  white-space: nowrap;
+}
 
 .thinking-placeholder {
   display: flex;
@@ -280,9 +344,11 @@ body.text-mode-only .loader {
   width: 100%;
   max-width: 100%;
 }
+
 .dark .thinking-placeholder {
   color: #b7e4c7;
 }
+
 .thinking-placeholder .thinking-animated {
   display: inline-block;
   background: linear-gradient(90deg, #778f80, #a8cab5, #778f80);
@@ -298,13 +364,29 @@ body.text-mode-only .loader {
 }
 
 @keyframes dot-gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .chat-bubble {
@@ -347,17 +429,22 @@ label {
   transition: background 0.2s, color 0.2s;
   outline: none;
 }
-.login-main-btn:hover, .login-main-btn:focus {
+
+.login-main-btn:hover,
+.login-main-btn:focus {
   color: #228b54 !important;
   box-shadow: 0 4px 18px #0002 !important;
 }
+
 @media (prefers-color-scheme: dark) {
   .login-main-btn {
     background-color: #355347 !important;
     color: #b7e4c7 !important;
     box-shadow: 0 2px 10px #0003 !important;
   }
-  .login-main-btn:hover, .login-main-btn:focus {
+
+  .login-main-btn:hover,
+  .login-main-btn:focus {
     color: #7be495 !important;
   }
 }
@@ -366,12 +453,14 @@ label {
 #privacyModal {
   z-index: 200;
 }
+
 #privacyModal:not(.hidden) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.60);
+  background: rgba(0, 0, 0, 0.60);
 }
+
 #privacyModal .prose {
   max-width: 100%;
   color: #222;
@@ -409,6 +498,7 @@ label {
 .dark #privacyModal .prose {
   color: #eaf7ef;
 }
+
 /* Asegurar que todos los elementos de texto dentro del modal sean legibles en modo oscuro */
 .dark #privacyModal .prose p,
 .dark #privacyModal .prose li,
@@ -425,15 +515,21 @@ label {
 .dark #privacyModal .prose pre {
   color: #eaf7ef;
 }
+
 #privacyModal .rounded-lg {
   box-shadow: 0 8px 32px #0005;
 }
+
 #privacyModal button {
   background: none;
   border: none;
   cursor: pointer;
 }
-#privacyModal h1, #privacyModal h2, #privacyModal h3, #privacyModal h4 {
+
+#privacyModal h1,
+#privacyModal h2,
+#privacyModal h3,
+#privacyModal h4 {
   margin-top: 1.2em;
   margin-bottom: 0.5em;
   font-weight: bold;
@@ -463,52 +559,131 @@ label {
 .dark #privacyModal h2 {
   border-bottom-color: #355347;
 }
-#privacyModal ul, #privacyModal ol {
+
+#privacyModal ul,
+#privacyModal ol {
   margin-left: 1.5em;
   margin-bottom: 1em;
 }
+
 #privacyModal a {
   color: #228b54;
   text-decoration: underline;
 }
+
 .dark #privacyModal a {
   color: #7be495;
   text-decoration: underline;
 }
+
 #privacyModal pre {
   background: #f4f4f4;
   padding: 1em;
   border-radius: 8px;
   overflow-x: auto;
 }
+
 .dark #privacyModal pre {
   background: #1a2320;
   color: #b7e4c7;
 }
 
 /* --- MODAL MARKDOWN LEGAL/AYUDA --- */
-.modal-md-heading { font-weight: bold; margin-top: 1.2em; margin-bottom: 0.5em; }
-.modal-md-h1 { font-size: 1.8em; border-bottom: 1px solid #d1f2e0; padding-bottom: 0.3em; }
-.modal-md-h2 { font-size: 1.5em; border-bottom: 1px solid #d1f2e0; padding-bottom: 0.2em; }
-.modal-md-h3 { font-size: 1.3em; }
-.modal-md-h4 { font-size: 1.1em; }
-.modal-md-paragraph { margin-bottom: 1em; }
-.modal-md-list { margin-left: 1.5em; margin-bottom: 1em; }
-.modal-md-link { color: #228b54; text-decoration: underline; }
-.modal-md-pre { background: #f8fef9; color: #185d39; padding: 1em; border-radius: 8px; overflow-x: auto; }
-.modal-md-code { background: #eaf7ef; color: #185d39; padding: 2px 6px; border-radius: 4px; }
-.modal-md-blockquote { border-left: 4px solid #228b54; padding-left: 1em; color: #185d39; margin: 1em 0; }
+.modal-md-heading {
+  font-weight: bold;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+}
+
+.modal-md-h1 {
+  font-size: 1.8em;
+  border-bottom: 1px solid #d1f2e0;
+  padding-bottom: 0.3em;
+}
+
+.modal-md-h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #d1f2e0;
+  padding-bottom: 0.2em;
+}
+
+.modal-md-h3 {
+  font-size: 1.3em;
+}
+
+.modal-md-h4 {
+  font-size: 1.1em;
+}
+
+.modal-md-paragraph {
+  margin-bottom: 1em;
+}
+
+.modal-md-list {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.modal-md-link {
+  color: #228b54;
+  text-decoration: underline;
+}
+
+.modal-md-pre {
+  background: #f8fef9;
+  color: #185d39;
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.modal-md-code {
+  background: #eaf7ef;
+  color: #185d39;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.modal-md-blockquote {
+  border-left: 4px solid #228b54;
+  padding-left: 1em;
+  color: #185d39;
+  margin: 1em 0;
+}
 
 /* Dark mode para modales markdown */
 @media (prefers-color-scheme: dark) {
-  .modal-md-heading, .modal-md-paragraph, .modal-md-list, .modal-md-blockquote, .modal-md-link, .modal-md-pre, .modal-md-code {
+
+  .modal-md-heading,
+  .modal-md-paragraph,
+  .modal-md-list,
+  .modal-md-blockquote,
+  .modal-md-link,
+  .modal-md-pre,
+  .modal-md-code {
     color: #fff !important;
   }
-  .modal-md-h1, .modal-md-h2 { border-bottom-color: #355347; }
-  .modal-md-pre { background: #1a2320; }
-  .modal-md-code { background: #355347; }
-  .modal-md-link { color: #7be495 !important; }
-  .modal-md-blockquote { border-left-color: #7be495; }
+
+  .modal-md-h1,
+  .modal-md-h2 {
+    border-bottom-color: #355347;
+  }
+
+  .modal-md-pre {
+    background: #1a2320;
+  }
+
+  .modal-md-code {
+    background: #355347;
+  }
+
+  .modal-md-link {
+    color: #7be495 !important;
+  }
+
+  .modal-md-blockquote {
+    border-left-color: #7be495;
+  }
 }
 
 .vallabus-textarea {
@@ -516,4 +691,48 @@ label {
   max-height: 160px;
   overflow-y: auto;
   touch-action: auto;
+}
+
+/* Botón Volver a VallaBus */
+#back-to-vallabus {
+  position: fixed;
+  top: 9px;
+  left: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: hsl(168.8, 48.2%, 32.5%);
+  /* Verde corporativo */
+  color: white;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, background-color 0.2s;
+  font-size: 1.1rem;
+}
+
+#back-to-vallabus:hover {
+  transform: scale(1.05);
+  background-color: hsl(168.8, 48.2%, 38%);
+}
+
+#back-to-vallabus:active {
+  transform: scale(0.95);
+}
+
+@media (prefers-color-scheme: dark) {
+  #back-to-vallabus {
+    background-color: #355347;
+    /* Un verde oscuro más acorde al tema dark del proyecto */
+    color: #b7e4c7;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  #back-to-vallabus:hover {
+    background-color: #3b5d4e;
+  }
 }
