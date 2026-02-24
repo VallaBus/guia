@@ -300,7 +300,19 @@ function mainVallaBus() {
         info.textContent = 'Escuchando... Pulsa para parar';
       };
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
+        }
+        transcript = transcript.trim();
+        if (!transcript) return; // Ignorar resultados intermedios o vacíos
+
+        if (esperandoRespuestaBot) return; // Bloquear si ya estamos procesando
+        esperandoRespuestaBot = true;
+        setControlesUsuarioActivos(false); // Deshabilitar controles de usuario
+
         info.textContent = '';
         document.getElementById('loader').style.display = 'flex';
         // Mostrar pregunta detectada
