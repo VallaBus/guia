@@ -40,6 +40,22 @@ function mainVallaBus() {
     let wasAuthenticated = false; // Nuevo flag para detectar transición de login
     let esperandoRespuestaBot = false; // Nuevo: flag para bloquear envíos múltiples
 
+    function scrollToBottom() {
+      const container = document.getElementById('chatContainer');
+      if (container) {
+        // En móviles, a veces el scroll lo tiene la ventana y no el contenedor,
+        // especialmente si el body usa min-h-screen en lugar de h-screen.
+        const scrollHeight = Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight,
+          container.scrollHeight
+        );
+        window.scrollTo({ top: scrollHeight, behavior: 'smooth' });
+        // Por si acaso el contenedor sí tiene un límite de altura y overflow
+        container.scrollTo({ top: scrollHeight, behavior: 'smooth' });
+      }
+    }
+
     // --- Detección estricta de soporte Speech API ---
     function isSpeechApiReallySupported() {
       try {
@@ -291,21 +307,44 @@ function mainVallaBus() {
       }
       recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.lang = 'es-ES';
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.maxAlternatives = 1;
       recognition.onstart = () => {
         recognizing = true;
         recognitionEnded = false;
         micBtn.classList.add('recording');
         info.textContent = 'Escuchando... Pulsa para parar';
+
+        let chatContainer = document.getElementById('chatContainer');
+        let interimBubble = document.getElementById('interim-bubble');
+        if (!interimBubble) {
+          interimBubble = document.createElement('div');
+          interimBubble.id = 'interim-bubble';
+          interimBubble.className = 'chat-bubble user-bubble bg-[#c0d6c5] dark:bg-[#23382b] text-[#1e4636] dark:text-[#eaf7ef] border border-[#d1f2e0] dark:border-[#3a4d44] rounded-2xl px-4 py-2 text-base w-fit self-end shadow-sm max-w-[90%] mb-3 mr-2 opacity-70 italic';
+          interimBubble.style.display = 'none';
+          chatContainer.appendChild(interimBubble);
+          setTimeout(() => scrollToBottom(), 100);
+        }
       };
       recognition.onresult = (event) => {
         let transcript = '';
+        let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
             transcript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
           }
         }
+
+        let interimBubble = document.getElementById('interim-bubble');
+        if (interimBubble && interimTranscript) {
+          interimBubble.style.display = 'block';
+          interimBubble.textContent = interimTranscript + "...";
+          updatePlaceholder();
+          setTimeout(() => scrollToBottom(), 50);
+        }
+
         transcript = transcript.trim();
         if (!transcript) return; // Ignorar resultados intermedios o vacíos
 
@@ -314,6 +353,8 @@ function mainVallaBus() {
         setControlesUsuarioActivos(false); // Deshabilitar controles de usuario
 
         info.textContent = '';
+        if (interimBubble) interimBubble.remove();
+
         document.getElementById('loader').style.display = 'flex';
         // Mostrar pregunta detectada
         (function () {
@@ -330,10 +371,14 @@ function mainVallaBus() {
       };
       recognition.onerror = (event) => {
         info.textContent = 'Error: ' + event.error;
+        let interimBubble = document.getElementById('interim-bubble');
+        if (interimBubble) interimBubble.remove();
         recognizing = false;
         micBtn.classList.remove('recording');
       };
       recognition.onend = () => {
+        let interimBubble = document.getElementById('interim-bubble');
+        if (interimBubble) interimBubble.remove();
         recognizing = false;
         recognitionEnded = true;
         micBtn.classList.remove('recording');
@@ -650,7 +695,7 @@ function mainVallaBus() {
       }
       chatContainer.appendChild(div);
       setTimeout(() => {
-        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        scrollToBottom();
       }, 100);
       updatePlaceholder();
 
@@ -929,7 +974,7 @@ function mainVallaBus() {
         div.innerHTML = '<span class="thinking-animated text-[#444] dark:text-[#eaf7ef]">Pensando</span>';
         chatContainer.appendChild(div);
         setTimeout(() => {
-          div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          scrollToBottom();
         }, 100);
       }
     }
