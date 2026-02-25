@@ -198,8 +198,13 @@ function mainVallaBus() {
     }
 
     // --- Utilidad para añadir ubicación si está disponible ---
-    function añadirUbicacionSiDisponible(bodyObj) {
-      const ubic = window.ubicacion && window.ubicacion.getUserLocation ? window.ubicacion.getUserLocation() : null;
+    async function añadirUbicacionSiDisponible(bodyObj) {
+      let ubic = null;
+      if (window.ubicacion && window.ubicacion.updateAndGetLocationAsync) {
+        ubic = await window.ubicacion.updateAndGetLocationAsync();
+      } else if (window.ubicacion && window.ubicacion.getUserLocation) {
+        ubic = window.ubicacion.getUserLocation();
+      }
       if (ubic && typeof ubic.latitud === 'number' && typeof ubic.longitud === 'number') {
         bodyObj.latitud = ubic.latitud;
         bodyObj.longitud = ubic.longitud;
@@ -269,7 +274,7 @@ function mainVallaBus() {
     // --- Lógica centralizada para enviar mensaje al bot y gestionar errores de autenticación ---
     async function enviarMensajeAlBot({ texto, sessionId, infoRef, textInputFormRef }) {
       let bodyObj = { texto, session_id: sessionId };
-      añadirUbicacionSiDisponible(bodyObj);
+      await añadirUbicacionSiDisponible(bodyObj);
       let body = JSON.stringify(bodyObj);
       let headers = await construirHeaders();
       if (!headers || !headers['Authorization']) {
